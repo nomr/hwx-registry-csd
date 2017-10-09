@@ -23,8 +23,7 @@
 
   "parcel": {
     "requiredTags": [
-      "nifi",
-      "zookeeper-plugin"
+      "nifi"
     ]
   },
 
