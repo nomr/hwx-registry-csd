@@ -6,9 +6,9 @@ VERSION=$(TAG)
 
 .INTERMEDIATE: %-SHA256
 .DELETE_ON_ERROR:
-.PHONY: release
+.PHONY: release install
 
-all: info release
+all: info install
 
 info:
 	@echo '       Git Tag: $(TAG)'
@@ -22,12 +22,23 @@ clean:
 	rm -rf release NIFI-*
 
 release: NIFI-$(VERSION).jar
+	([ -d /opt/cloudera/csd ] && rm -rf /opt/cloudera/csd/NIFI-*.jar && cp $< /opt/cloudera/csd) || true
+
+install: NIFI-$(VERSION).jar .cookie
+	cp $< /opt/cloudera/csd
+	chown cloudera-scm:cloudera-scm /opt/cloudera/csd/$<
+	curl -s http://localhost:7180/cmf/csd/refresh -b .cookie  | jq
+	curl -s http://localhost:7180/cmf/csd/install?csdName=NIFI-$(VERSION) -b .cookie  | jq
+
+.cookie:
+	curl -s http://localhost:7180/cmf/login/j_spring_security_check -c .cookie -d "j_username=$CM_USR&j_password=$CM_PSW"
 
 
-NIFI-$(VERSION): csd validator.jar NIFI-$(VERSION)/images/icon.png
+NIFI-$(VERSION): csd NIFI-$(VERSION)/images/icon.png validator.jar
 	rsync -a $</ $@/
-	cat $</descriptor/service.sdl | jq ".version=\"$(VERSION)\"" > $@/descriptor/service.sdl
+	cat $</descriptor/service.sdl | jq ".version=\"$(subst NIFI-,,$@)\"" > $@/descriptor/service.sdl
 	java -jar validator.jar -s $@/descriptor/service.sdl || (rm -rf $@ && false)
+
 
 # Remote dependencies
 validator.jar:
@@ -49,7 +60,7 @@ nifi-$(NIFI_VERSION)-bin.tar.gz: nifi-$(NIFI_VERSION)-bin.tar.gz-SHA256
 	grep $(subst -SHA256,,$@) SHA256SUMS > $@
 
 %.jar: %
-	jar cvf $@ $<
+	jar cvf $@ -C $< .
 
 %.png: %.ico
 	convert $< $@
