@@ -17,35 +17,7 @@
 
 # Script structure inspired from Apache Karaf and other Apache projects with similar startup approaches
 
-# Discover the path of the file
-
-
-# Since MacOS X, FreeBSD and some other systems lack gnu readlink, we use a more portable
-# approach based on following StackOverflow comment http://stackoverflow.com/a/1116890/888876
-
-TARGET_FILE=$0
-
-cd $(dirname $TARGET_FILE)
-TARGET_FILE=$(basename $TARGET_FILE)
-
-# Iterate down a (possible) chain of symlinks
-while [ -L "$TARGET_FILE" ]
-do
-    TARGET_FILE=$(readlink $TARGET_FILE)
-    cd $(dirname $TARGET_FILE)
-    TARGET_FILE=$(basename $TARGET_FILE)
-done
-
-# Compute the canonicalized name by finding the physical path
-# for the directory we're in and appending the target file.
-PHYS_DIR=$(pwd -P)
-
-SCRIPT_DIR=$PHYS_DIR
-PROGNAME=$(basename "$0")
-
-. "${SCRIPT_DIR}/nifi-env.sh"
-
-
+. ${COMMON_SCRIPT}
 
 warn() {
     echo "${PROGNAME}: $*"
@@ -88,14 +60,7 @@ unlimitFD() {
 
 locateJava() {
     # Setup the Java Virtual Machine
-    if $cygwin ; then
-        [ -n "${JAVA}" ] && JAVA=$(cygpath --unix "${JAVA}")
-        [ -n "${JAVA_HOME}" ] && JAVA_HOME=$(cygpath --unix "${JAVA_HOME}")
-    fi
 
-    if [ "x${JAVA}" = "x" ] && [ -r /etc/gentoo-release ] ; then
-        JAVA_HOME=$(java-config --jre-home)
-    fi
     if [ "x${JAVA}" = "x" ]; then
         if [ "x${JAVA_HOME}" != "x" ]; then
             if [ ! -d "${JAVA_HOME}" ]; then
@@ -132,22 +97,10 @@ init() {
 
 
 run() {
-    BOOTSTRAP_CONF_DIR="${NIFI_HOME}/conf"
+    BOOTSTRAP_CONF_DIR="${CONF_DIR}"
     BOOTSTRAP_CONF="${BOOTSTRAP_CONF_DIR}/bootstrap.conf";
-    BOOTSTRAP_LIBS="${NIFI_HOME}/lib/bootstrap/*"
+    BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
 
-    run_as_user=$(grep '^\s*run.as' "${BOOTSTRAP_CONF}" | cut -d'=' -f2)
-    # If the run as user is the same as that starting the process, ignore this configuration
-    if [ "${run_as_user}" = "$(whoami)" ]; then
-        unset run_as_user
-    fi
-
-    if [ -n "${run_as_user}" ]; then
-        if ! id -u "${run_as_user}" >/dev/null 2>&1; then
-            echo "The specified run.as user ${run_as_user} does not exist. Exiting."
-            exit 1
-        fi
-    fi;
     BOOTSTRAP_CLASSPATH="${BOOTSTRAP_CONF_DIR}:${BOOTSTRAP_LIBS}"
     if [ -n "${TOOLS_JAR}" ]; then
         BOOTSTRAP_CLASSPATH="${TOOLS_JAR}:${BOOTSTRAP_CLASSPATH}"
@@ -160,9 +113,6 @@ run() {
     echo "Bootstrap Config File: ${BOOTSTRAP_CONF}"
     echo
 
-    # run 'start' in the background because the process will continue to run, monitoring NiFi.
-    # all other commands will terminate quickly so want to just wait for them
-
     #setup directory parameters
     BOOTSTRAP_LOG_PARAMS="-Dorg.apache.nifi.bootstrap.config.log.dir='${NIFI_LOG_DIR}'"
     BOOTSTRAP_PID_PARAMS="-Dorg.apache.nifi.bootstrap.config.pid.dir='${NIFI_PID_DIR}'"
@@ -172,21 +122,12 @@ run() {
 
     run_nifi_cmd="'${JAVA}' -cp '${BOOTSTRAP_CLASSPATH}' -Xms12m -Xmx24m ${BOOTSTRAP_DIR_PARAMS} org.apache.nifi.bootstrap.RunNiFi $@"
 
-    if [ -n "${run_as_user}" ]; then
-      # Provide SCRIPT_DIR and execute nifi-env for the run.as user command
-      run_nifi_cmd="sudo -u ${run_as_user} sh -c \"SCRIPT_DIR='${SCRIPT_DIR}' && . '${SCRIPT_DIR}/nifi-env.sh' && ${run_nifi_cmd}\""
-    fi
-
     if [ "$1" = "run" ]; then
       # Use exec to handover PID to RunNiFi java process, instead of foking it as a child process
       run_nifi_cmd="exec ${run_nifi_cmd}"
     fi
 
-    if [ "$1" = "start" ]; then
-        ( eval "cd ${NIFI_HOME} && ${run_nifi_cmd}" & )> /dev/null 1>&-
-    else
-        eval "cd ${NIFI_HOME} && ${run_nifi_cmd}"
-    fi
+    eval "cd ${NIFI_HOME} && ${run_nifi_cmd}"
     EXIT_STATUS=$?
 
     # Wait just a bit (3 secs) to wait for the logging to finish and then echo a new-line.
@@ -203,15 +144,10 @@ main() {
 
 
 case "$1" in
-    start|stop|run|status|dump|env)
+    stop|run|status|dump|env)
         main "$@"
         ;;
-    restart)
-        init
-        run "stop"
-        run "start"
-        ;;
     *)
-        echo "Usage nifi {start|stop|run|restart|status|dump|install}"
+        echo "Usage nifi {stop|run|status|dump|env}"
         ;;
 esac
