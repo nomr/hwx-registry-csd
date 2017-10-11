@@ -56,16 +56,11 @@ unlimitFD() {
     fi
 }
 
-
-
-init() {
-    # Unlimit the number of file descriptors if possible
-    unlimitFD
-
-    # Locate Java Home
-    export BIGTOP_JAVA_MAJOR=8
-    export JAVA_HOME=
-    locate_java_home
+locate_java8_home() {
+    if [ -z "${JAVA_HOME}" ]; then
+        BIGTOP_JAVA_MAJOR=8
+        locate_java_home
+    fi
 
     JAVA="${JAVA_HOME}/bin/java"
 
@@ -77,6 +72,15 @@ init() {
              warn "Could not locate tools.jar or classes.jar. Please set manually to avail all command features."
         fi
     fi
+}
+
+
+init() {
+    # Unlimit the number of file descriptors if possible
+    unlimitFD
+
+    # NiFi 1.4.0 was compiled with 1.8.0
+    locate_java8_home $1
 
     # Refresh configuration files
     update_bootstrap_conf
