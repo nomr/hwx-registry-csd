@@ -19,9 +19,6 @@
 
 . ${COMMON_SCRIPT}
 
-export NIFI_HOME=~nifi
-export NIFI_PID_DIR=${NIFI_HOME}
-
 warn() {
     echo "${PROGNAME}: $*"
 }
@@ -80,6 +77,10 @@ init() {
              warn "Could not locate tools.jar or classes.jar. Please set manually to avail all command features."
         fi
     fi
+
+    # Refresh configuration files
+    update_bootstrap_conf
+    close_xml_file "services" bootstrap-notification-services.xml
 }
 
 #TODO: replace with sed
@@ -91,12 +92,19 @@ insert_if_not_exists() {
     fi
 }
 
+close_xml_file() {
+    XML_TAG=$1
+    FILE=$2
+
+    if ! grep -c "</${XML_TAG}>" ${FILE} > /dev/null; then
+        echo "</${XML_TAG}>" >> ${FILE}
+    fi
+}
+
 update_bootstrap_conf() {
     # Update bootstrap.conf
-    insert_if_not_exists "java=${JAVA}" ${BOOTSTRAP_CONF}
     insert_if_not_exists "lib.dir=${CDH_NIFI_HOME}/lib" ${BOOTSTRAP_CONF}
-    insert_if_not_exists "conf.dir=${CONF_DIR}/aux" ${BOOTSTRAP_CONF}
-    insert_if_not_exists "notification.services.file=${CONF_DIR}/aux/bootstrap-notification-services.xml" ${BOOTSTRAP_CONF}
+
     # Disable JSR 199 so that we can use JSP's without running a JDK
     insert_if_not_exists "java.arg.1=-Dorg.apache.jasper.compiler.disablejsr199=true" ${BOOTSTRAP_CONF}
     # JVM memory settings
@@ -135,7 +143,6 @@ run() {
         BOOTSTRAP_CLASSPATH="${TOOLS_JAR}:${BOOTSTRAP_CLASSPATH}"
     fi
 
-    update_bootstrap_conf
 
     echo
     echo "Java home: ${JAVA_HOME}"

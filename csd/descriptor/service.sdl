@@ -1,7 +1,8 @@
 {
   "name": "NIFI",
   "label": "NiFi",
-  "description": "Apache's NiFi service",
+  "description": "Apache's NiFi service. <span class=\"error\">Requires Java 8.</span>",
+
   "version": "0.1.0",
 
   "compatibility" : {
@@ -37,6 +38,31 @@
 
   "inExpressWizard" : false,
 
+  "parameters": [
+    {
+      "name": "java_home",
+      "label": "Java 8 Home",
+      "description": "Path to Java 8",
+      "configName": "java.home",
+      "required": true,
+      "configurableInWizard": true,
+      "default": "/usr/java/jdk1.8.0_121",
+      "type": "path",
+      "pathType": "serviceSpecific"
+    },
+    {
+      "name": "nifi_home",
+      "label": "NiFi Home directory",
+      "description": "NiFi's service instance home directory",
+      "required": true,
+      "configurableInWizard": true,
+      "default": "/var/run/nifi",
+      "type": "path",
+      "pathType": "localDataDir",
+      "mode": "0750"
+    }
+  ],
+
   "roles": [
     {
       "name": "NIFI_SERVER",
@@ -46,6 +72,9 @@
         "program": "scripts/control.sh",
         "args": [ "run" ],
         "environmentVariables" : {
+          "JAVA_HOME": "${java_home}",
+          "NIFI_HOME": "${nifi_home}",
+          "NIFI_PID_DIR": "${nifi_home}",
           "NIFI_LOG_DIR": "/var/log/nifi"
         }
       },
@@ -53,6 +82,9 @@
         "program": "scripts/control.sh",
         "args": [ "stop" ],
         "environmentVariables" : {
+          "JAVA_HOME": "${java_home}",
+          "NIFI_HOME": "${nifi_home}",
+          "NIFI_PID_DIR": "${nifi_home}",
           "NIFI_LOG_DIR": "/var/log/nifi"
         }
       },
@@ -62,9 +94,53 @@
       },
       "logging": {
         "dir": "/var/log/nifi",
-        "filename": "nifi-app.log",
-        "modifiable": false,
-        "loggingType": "logback"
+        "filename": "nifi.log",
+        "modifiable": true,
+        "loggingType": "logback",
+        "additionalConfigs": [
+          { "key": "1", "value": "<contextListener class=\"ch.qos.logback.classic.jul.LevelChangePropagator\"><resetJUL>true</resetJUL></contextListener>"},
+          { "key": "1", "value": "<logger name=\"org.apache.nifi\" level=\"INFO\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.processors\" level=\"WARN\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.processors.standard.LogAttribute\" level=\"INFO\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.processors.standard.LogMessage\" level=\"INFO\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.controller.repository.StandardProcessSession\" level=\"WARN\" />" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.zookeeper.ClientCnxn\" level=\"ERROR\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.zookeeper.server.NIOServerCnxn\" level=\"ERROR\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.zookeeper.server.NIOServerCnxnFactory\" level=\"ERROR\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.zookeeper.server.quorum\" level=\"ERROR\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.zookeeper.ZooKeeper\" level=\"ERROR\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.zookeeper.server.PrepRequestProcessor\" level=\"ERROR\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.calcite.runtime.CalciteException\" level=\"OFF\" />" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.curator.framework.recipes.leader.LeaderSelector\" level=\"OFF\" />" },
+          { "key": "1", "value": "<logger name=\"org.apache.curator.ConnectionState\" level=\"OFF\" />" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.cluster\" level=\"INFO\"/>" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.server.JettyServer\" level=\"INFO\"/>" },
+
+          { "key": "1", "value": "<logger name=\"org.eclipse.jetty\" level=\"INFO\"/>" },
+
+          { "key": "1", "value": "<logger name=\"com.sun.jersey.spi.container.servlet.WebComponent\" level=\"ERROR\"/>" },
+          { "key": "1", "value": "<logger name=\"com.sun.jersey.spi.spring\" level=\"ERROR\"/>" },
+          { "key": "1", "value": "<logger name=\"org.springframework\" level=\"ERROR\"/>" },
+
+          { "key": "1", "value": "<logger name=\"com.sun.jersey.spi.inject.Errors\" level=\"ERROR\"/>" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.web.security\" level=\"INFO\" additivity=\"false\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.web.api.config\" level=\"INFO\" additivity=\"false\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.authorization\" level=\"INFO\" additivity=\"false\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.cluster.authorization\" level=\"INFO\" additivity=\"false\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.web.filter.RequestLogger\" level=\"INFO\" additivity=\"false\"/>" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.bootstrap\" level=\"INFO\" additivity=\"false\"/>" },
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.bootstrap.Command\" level=\"INFO\" additivity=\"false\"/>" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.StdOut\" level=\"INFO\" additivity=\"false\"/>" },
+
+          { "key": "1", "value": "<logger name=\"org.apache.nifi.StdErr\" level=\"ERROR\" additivity=\"false\"/>" }
+        ]
       },
       "configWriter": {
         "generators": [
@@ -75,6 +151,18 @@
               "bs_graceful_shutdown_seconds"
             ],
             "additionalConfigs": [
+              {
+                "key": "java",
+                "value": "${java_home}/bin/java"
+              },
+              {
+                "key": "conf.dir",
+                "value": "${nifi_home}/conf"
+              },
+              {
+                "key": "notification.services.file",
+                "value": "bootstrap-notification-services.xml"
+              },
               {
                 "key": "notification.max.attempts",
                 "value": "5"
@@ -88,6 +176,12 @@
                 "value": ""
               }
             ]
+          }
+        ],
+        "auxConfigGenerators": [
+          {
+            "filename": "bootstrap-notification-services.xml",
+            "sourceFilename": "aux/bootstrap-notification-services.safety-valve-xml"
           }
         ]
       },
