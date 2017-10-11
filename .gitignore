@@ -1,5 +1,6 @@
 *.parcel
 csd/images/icon.png
+.cookie
 
 # Release and intermediates
 release
