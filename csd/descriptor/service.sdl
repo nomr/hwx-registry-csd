@@ -178,6 +178,10 @@
           {
             "filename": "bootstrap-notification-services.xml",
             "sourceFilename": "aux/bootstrap-notification-services.safety-valve-xml"
+          },
+          {
+            "filename": "login-identity-providers.xml",
+            "sourceFilename": "aux/login-identity-providers.safety-valve-xml"
           }
         ]
       },

@@ -109,4 +109,3 @@
         <property name="Authentication Expiration">12 hours</property>
     </provider>
     To enable the kerberos-provider remove 2 lines. This is 2 of 2. -->
-</loginIdentityProviders>

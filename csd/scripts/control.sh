@@ -103,6 +103,10 @@ init() {
     # Init configuration files
     init_bootstrap
     init_logback_xml
+ 
+    # close aux generated config files
+    close_xml_file "services" bootstrap-notification-services.xml
+    close_xml_file "loginIdentityProviders" login-identity-providers.xml
 }
 
 init_bootstrap() {
@@ -123,7 +127,6 @@ init_bootstrap() {
     BOOTSTRAP_DIR_PARAMS="${BOOTSTRAP_LOG_PARAMS} ${BOOTSTRAP_PID_PARAMS} ${BOOTSTRAP_CONF_PARAMS}"
 
     update_bootstrap_conf
-    close_xml_file "services" bootstrap-notification-services.xml
 
     echo
     echo "Java home: ${JAVA_HOME}"
