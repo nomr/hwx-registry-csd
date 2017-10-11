@@ -19,6 +19,9 @@
 
 . ${COMMON_SCRIPT}
 
+export NIFI_HOME=~nifi
+export NIFI_PID_DIR=${NIFI_HOME}
+
 warn() {
     echo "${PROGNAME}: $*"
 }
@@ -58,24 +61,17 @@ unlimitFD() {
 
 
 
-locateJava() {
-    # Setup the Java Virtual Machine
+init() {
+    # Unlimit the number of file descriptors if possible
+    unlimitFD
 
-    if [ "x${JAVA}" = "x" ]; then
-        if [ "x${JAVA_HOME}" != "x" ]; then
-            if [ ! -d "${JAVA_HOME}" ]; then
-                die "JAVA_HOME is not valid: ${JAVA_HOME}"
-            fi
-            JAVA="${JAVA_HOME}/bin/java"
-        else
-            warn "JAVA_HOME not set; results may vary"
-            JAVA=$(type java)
-            JAVA=$(expr "${JAVA}" : '.* \(/.*\)$')
-            if [ "x${JAVA}" = "x" ]; then
-                die "java command not found"
-            fi
-        fi
-    fi
+    # Locate Java Home
+    export BIGTOP_JAVA_MAJOR=8
+    export JAVA_HOME=
+    locate_java_home
+
+    JAVA="${JAVA_HOME}/bin/java"
+
     # if command is env, attempt to add more to the classpath
     if [ "$1" = "env" ]; then
         [ "x${TOOLS_JAR}" =  "x" ] && [ -n "${JAVA_HOME}" ] && TOOLS_JAR=$(find -H "${JAVA_HOME}" -name "tools.jar")
@@ -84,27 +80,62 @@ locateJava() {
              warn "Could not locate tools.jar or classes.jar. Please set manually to avail all command features."
         fi
     fi
-
 }
 
-init() {
-    # Unlimit the number of file descriptors if possible
-    unlimitFD
+#TODO: replace with sed
+insert_if_not_exists() {
+    LINE=$1
+    FILE=$2
+    if ! grep -c "${LINE}" ${FILE} > /dev/null; then
+        echo "${LINE}" >> ${FILE}
+    fi
+}
 
-    # Locate the Java VM to execute
-    locateJava "$1"
+update_bootstrap_conf() {
+    # Update bootstrap.conf
+    insert_if_not_exists "java=${JAVA}" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "lib.dir=${CDH_NIFI_HOME}/lib" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "conf.dir=${CONF_DIR}/aux" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "notification.services.file=${CONF_DIR}/aux/bootstrap-notification-services.xml" ${BOOTSTRAP_CONF}
+    # Disable JSR 199 so that we can use JSP's without running a JDK
+    insert_if_not_exists "java.arg.1=-Dorg.apache.jasper.compiler.disablejsr199=true" ${BOOTSTRAP_CONF}
+    # JVM memory settings
+    insert_if_not_exists "java.arg.2=-Xms512m" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "java.arg.3=-Xmx512m" ${BOOTSTRAP_CONF}
+
+    # Enable Remote Debugging
+    #java.arg.debug=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
+
+    insert_if_not_exists "java.arg.4=-Djava.net.preferIPv4Stack=true" ${BOOTSTRAP_CONF}
+
+    # allowRestrictedHeaders is required for Cluster/Node communications to work properly
+    insert_if_not_exists "java.arg.5=-Dsun.net.http.allowRestrictedHeaders=true" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "java.arg.6=-Djava.protocol.handler.pkgs=sun.net.www.protocol" ${BOOTSTRAP_CONF}
+
+    # The G1GC is still considered experimental but has proven to be very advantageous in providing great
+    # performance without significant "stop-the-world" delays.
+    insert_if_not_exists "java.arg.13=-XX:+UseG1GC" ${BOOTSTRAP_CONF}
+
+    #Set headless mode by default
+    insert_if_not_exists "java.arg.14=-Djava.awt.headless=true" ${BOOTSTRAP_CONF}
+
+    # Sets the provider of SecureRandom to /dev/urandom to prevent blocking on VMs
+    insert_if_not_exists "java.arg.15=-Djava.security.egd=file:/dev/urandom" ${BOOTSTRAP_CONF}
 }
 
 
 run() {
     BOOTSTRAP_CONF_DIR="${CONF_DIR}"
     BOOTSTRAP_CONF="${BOOTSTRAP_CONF_DIR}/bootstrap.conf";
-    BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
+    BOOTSTRAP_LIBS=`find "${CDH_NIFI_HOME}/lib/bootstrap" -maxdepth 1 -name '*.jar' | tr "\n" ":"`
+    #BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
 
     BOOTSTRAP_CLASSPATH="${BOOTSTRAP_CONF_DIR}:${BOOTSTRAP_LIBS}"
     if [ -n "${TOOLS_JAR}" ]; then
         BOOTSTRAP_CLASSPATH="${TOOLS_JAR}:${BOOTSTRAP_CLASSPATH}"
     fi
+
+    update_bootstrap_conf
 
     echo
     echo "Java home: ${JAVA_HOME}"

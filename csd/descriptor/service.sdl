@@ -22,6 +22,7 @@
   "icon": "images/icon.png",
 
   "parcel": {
+    "repoUrl" : "https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.1.2",
     "requiredTags": [
       "nifi"
     ]
@@ -34,18 +35,17 @@
     }
   ],
 
+  "inExpressWizard" : false,
+
   "roles": [
     {
       "name": "NIFI_SERVER",
       "label": "NiFi Server",
       "pluralLabel": "NiFi Servers",
-      "parameters": [
-      ],
       "startRunner": {
         "program": "scripts/control.sh",
         "args": [ "run" ],
         "environmentVariables" : {
-          "NIFI_PID_DIR": "/var/run/nifi",
           "NIFI_LOG_DIR": "/var/log/nifi"
         }
       },
@@ -53,10 +53,58 @@
         "program": "scripts/control.sh",
         "args": [ "stop" ],
         "environmentVariables" : {
-          "NIFI_PID_DIR": "/var/run/nifi",
           "NIFI_LOG_DIR": "/var/log/nifi"
         }
-      }
+      },
+      "topology": {
+        "minInstances": "1",
+        "softMinInstances": "3"
+      },
+      "logging": {
+        "dir": "/var/log/nifi",
+        "filename": "nifi-app.log",
+        "modifiable": false,
+        "loggingType": "logback"
+      },
+      "configWriter": {
+        "generators": [
+          {
+            "filename": "bootstrap.conf",
+            "configFormat": "properties",
+            "includedParams": [
+              "bs_graceful_shutdown_seconds"
+            ],
+            "additionalConfigs": [
+              {
+                "key": "notification.max.attempts",
+                "value": "5"
+              },
+              {
+                "key": "run.as",
+                "value": ""
+              },
+              {
+                "key": "nifi.bootstrap.sensitive.key",
+                "value": ""
+              }
+            ]
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "name": "bs_graceful_shutdown_seconds",
+          "label": "Graceful Shutdown (in seconds)",
+          "description": "How long to wait after telling NiFi to shutdown before explicitly killing the Process",
+          "configName": "graceful.shutdown.seconds",
+          "required": true,
+          "default": 20,
+          "type": "long",
+          "min": 0,
+          "softMin": 20,
+          "unit": "seconds"
+        }
+      ]
     }
   ]
 }
