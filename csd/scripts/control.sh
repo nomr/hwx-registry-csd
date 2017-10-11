@@ -74,19 +74,6 @@ locate_java8_home() {
     fi
 }
 
-
-init() {
-    # Unlimit the number of file descriptors if possible
-    unlimitFD
-
-    # NiFi 1.4.0 was compiled with 1.8.0
-    locate_java8_home $1
-
-    # Refresh configuration files
-    update_bootstrap_conf
-    close_xml_file "services" bootstrap-notification-services.xml
-}
-
 #TODO: replace with sed
 insert_if_not_exists() {
     LINE=$1
@@ -105,9 +92,51 @@ close_xml_file() {
     fi
 }
 
+
+init() {
+    # Unlimit the number of file descriptors if possible
+    unlimitFD
+
+    # NiFi 1.4.0 was compiled with 1.8.0
+    locate_java8_home $1
+
+    # Init configuration files
+    init_bootstrap
+    init_logback_xml
+}
+
+init_bootstrap() {
+    BOOTSTRAP_CONF="${CONF_DIR}/bootstrap.conf";
+    BOOTSTRAP_LIBS=`find "${CDH_NIFI_HOME}/lib/bootstrap" -maxdepth 1 -name '*.jar' | tr "\n" ":"`
+    #BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
+
+    BOOTSTRAP_CLASSPATH="${BOOTSTRAP_CONF_DIR}:${BOOTSTRAP_LIBS}"
+    if [ -n "${TOOLS_JAR}" ]; then
+        BOOTSTRAP_CLASSPATH="${TOOLS_JAR}:${BOOTSTRAP_CLASSPATH}"
+    fi
+
+    #setup directory parameters
+    BOOTSTRAP_LOG_PARAMS="-Dorg.apache.nifi.bootstrap.config.log.dir='${NIFI_LOG_DIR}'"
+    BOOTSTRAP_PID_PARAMS="-Dorg.apache.nifi.bootstrap.config.pid.dir='${NIFI_PID_DIR}'"
+    BOOTSTRAP_CONF_PARAMS="-Dorg.apache.nifi.bootstrap.config.file='${BOOTSTRAP_CONF}'"
+
+    BOOTSTRAP_DIR_PARAMS="${BOOTSTRAP_LOG_PARAMS} ${BOOTSTRAP_PID_PARAMS} ${BOOTSTRAP_CONF_PARAMS}"
+
+    update_bootstrap_conf
+    close_xml_file "services" bootstrap-notification-services.xml
+
+    echo
+    echo "Java home: ${JAVA_HOME}"
+    echo "NiFi home: ${NIFI_HOME}"
+    echo
+    echo "Bootstrap Config File: ${BOOTSTRAP_CONF}"
+    echo
+}
+
 update_bootstrap_conf() {
     # Update bootstrap.conf
     insert_if_not_exists "lib.dir=${CDH_NIFI_HOME}/lib" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "conf.dir=${CONF_DIR}" ${BOOTSTRAP_CONF}
 
     # Disable JSR 199 so that we can use JSP's without running a JDK
     insert_if_not_exists "java.arg.1=-Dorg.apache.jasper.compiler.disablejsr199=true" ${BOOTSTRAP_CONF}
@@ -135,33 +164,11 @@ update_bootstrap_conf() {
     insert_if_not_exists "java.arg.15=-Djava.security.egd=file:/dev/urandom" ${BOOTSTRAP_CONF}
 }
 
+init_logback_xml() {
+    sed -i 's/<configuration>/<configuration scan="true" scanPeriod="30 seconds">/' logback.xml
+}
 
 run() {
-    BOOTSTRAP_CONF_DIR="${CONF_DIR}"
-    BOOTSTRAP_CONF="${BOOTSTRAP_CONF_DIR}/bootstrap.conf";
-    BOOTSTRAP_LIBS=`find "${CDH_NIFI_HOME}/lib/bootstrap" -maxdepth 1 -name '*.jar' | tr "\n" ":"`
-    #BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
-
-    BOOTSTRAP_CLASSPATH="${BOOTSTRAP_CONF_DIR}:${BOOTSTRAP_LIBS}"
-    if [ -n "${TOOLS_JAR}" ]; then
-        BOOTSTRAP_CLASSPATH="${TOOLS_JAR}:${BOOTSTRAP_CLASSPATH}"
-    fi
-
-
-    echo
-    echo "Java home: ${JAVA_HOME}"
-    echo "NiFi home: ${NIFI_HOME}"
-    echo
-    echo "Bootstrap Config File: ${BOOTSTRAP_CONF}"
-    echo
-
-    #setup directory parameters
-    BOOTSTRAP_LOG_PARAMS="-Dorg.apache.nifi.bootstrap.config.log.dir='${NIFI_LOG_DIR}'"
-    BOOTSTRAP_PID_PARAMS="-Dorg.apache.nifi.bootstrap.config.pid.dir='${NIFI_PID_DIR}'"
-    BOOTSTRAP_CONF_PARAMS="-Dorg.apache.nifi.bootstrap.config.file='${BOOTSTRAP_CONF}'"
-
-    BOOTSTRAP_DIR_PARAMS="${BOOTSTRAP_LOG_PARAMS} ${BOOTSTRAP_PID_PARAMS} ${BOOTSTRAP_CONF_PARAMS}"
-
     run_nifi_cmd="'${JAVA}' -cp '${BOOTSTRAP_CLASSPATH}' -Xms12m -Xmx24m ${BOOTSTRAP_DIR_PARAMS} org.apache.nifi.bootstrap.RunNiFi $@"
 
     if [ "$1" = "run" ]; then
@@ -169,7 +176,7 @@ run() {
       run_nifi_cmd="exec ${run_nifi_cmd}"
     fi
 
-    eval "cd ${NIFI_HOME} && ${run_nifi_cmd}"
+    eval "cd ${CONF_DIR} && ${run_nifi_cmd}"
     EXIT_STATUS=$?
 
     # Wait just a bit (3 secs) to wait for the logging to finish and then echo a new-line.
