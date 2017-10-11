@@ -87,7 +87,7 @@ close_xml_file() {
     XML_TAG=$1
     FILE=$2
 
-    if ! grep -c "</${XML_TAG}>" ${FILE} > /dev/null; then
+    if ! tail ${FILE} | grep -c "^</${XML_TAG}>$" > /dev/null; then
         echo "</${XML_TAG}>" >> ${FILE}
     fi
 }
