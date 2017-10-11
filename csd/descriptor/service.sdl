@@ -156,10 +156,6 @@
                 "value": "${java_home}/bin/java"
               },
               {
-                "key": "conf.dir",
-                "value": "${nifi_home}/conf"
-              },
-              {
                 "key": "notification.services.file",
                 "value": "bootstrap-notification-services.xml"
               },
