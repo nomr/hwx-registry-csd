@@ -172,6 +172,26 @@
                 "value": ""
               }
             ]
+          },
+          {
+            "filename": "state-management-local-provider.xml",
+            "configFormat": "hadoop_xml",
+            "includedParams": [
+              "state_management_local_provider_directory",
+              "state_management_local_provider_always_sync",
+              "state_management_local_provider_partitions",
+              "state_management_local_provider_checkpoint_interval"
+            ],
+            "additionalConfigs": [
+              {
+                "key": "id",
+                "value": "local-provider"
+              },
+              {
+                "key": "class",
+                "value": "org.apache.nifi.controller.state.providers.local.WriteAheadLocalStateProvider"
+              }
+            ]
           }
         ],
         "auxConfigGenerators": [
@@ -196,11 +216,54 @@
           "description": "How long to wait after telling NiFi to shutdown before explicitly killing the Process",
           "configName": "graceful.shutdown.seconds",
           "required": true,
-          "default": 20,
           "type": "long",
-          "min": 0,
+          "unit": "seconds",
+          "min": 1,
           "softMin": 20,
-          "unit": "seconds"
+          "default": 20
+        },
+        {
+          "name": "state_management_local_provider_directory",
+          "label": "State Management Local Provider Directory",
+          "description": "The directory to store components' state in.",
+          "configName": "Directory",
+          "required": true,
+          "configurableInWizard": true,
+          "type": "path",
+          "conformRegex": "/.*",
+          "pathType": "localDataDir",
+          "mode": "0750",
+          "default": "/var/run/nifi/state/local"
+        },
+        {
+          "name": "state_management_local_provider_always_sync",
+          "label": "State Management Local Provider Always Sync",
+          "description": "Always Sync - If set to true, any change to the repository will be synchronized to the disk, meaning that NiFi will ask the operating system not to cache the information. This is very expensive and can significantly reduce NiFi performance. However, if it is false, there could be the potential for data loss if either there is a sudden power loss or the operating system crashes. The default value is false.",
+          "configName": "Always Sync",
+          "required": true,
+          "type": "boolean",
+          "default": "false"
+        },
+        {
+          "name": "state_management_local_provider_partitions",
+          "label": "State Management Local Provider Number of Partitions",
+          "description": "The number of partitions.",
+          "configName": "Partitions",
+          "required": true,
+          "type": "long",
+          "min": 1,
+          "default": 16
+        },
+        {
+          "name": "state_management_local_provider_checkpoint_interval",
+          "label": "State Management Local Provider Checkpoint Interval",
+          "description": "The amount of time between checkpoints.",
+          "configName": "Checkpoint Interval",
+          "required": true,
+          "type": "long",
+          "unit": "minutes",
+          "min": 1,
+          "default": 2
         }
       ]
     }
