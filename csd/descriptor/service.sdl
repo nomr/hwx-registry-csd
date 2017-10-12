@@ -174,13 +174,36 @@
             ]
           },
           {
+            "filename": "nifi-future.conf",
+            "configFormat": "properties",
+            "includedParams": [
+            ],
+            "additionalConfigs": [
+              {
+                "key": "nifi.state.management.configuration.file",
+                "value": "./state-management.xml"
+              },
+              {
+                "key": "nifi.state.management.provider.local",
+                "value": "local-provider"
+              },
+              {
+                "key": "nifi.state.management.provider.cluster",
+                "value": "zk-provider"
+              },
+              {
+                "key": "nifi.state.management.embedded.zookeeper.start",
+                "value": "false"
+              }
+	    ]
+          },
+          {
             "filename": "state-management-local-provider.xml",
             "configFormat": "hadoop_xml",
             "includedParams": [
               "state_management_local_provider_directory",
               "state_management_local_provider_always_sync",
-              "state_management_local_provider_partitions",
-              "state_management_local_provider_checkpoint_interval"
+              "state_management_local_provider_partitions"
             ],
             "additionalConfigs": [
               {
@@ -190,6 +213,40 @@
               {
                 "key": "class",
                 "value": "org.apache.nifi.controller.state.providers.local.WriteAheadLocalStateProvider"
+              },
+              {
+                "key": "Checkpoint Interval",
+                "value": "${state_management_local_provider_checkpoint_interval} mins"
+              },
+              {
+                "key": "cdh.stateManagement.provider.type",
+                "value": "local-provider"
+              }
+            ]
+          },
+          {
+            "filename": "state-management-zk-provider.xml",
+            "configFormat": "hadoop_xml",
+            "includedParams": [
+              "state_management_zk_provider_root_node",
+              "state_management_zk_provider_access_control"
+            ],
+            "additionalConfigs": [
+              {
+                "key": "id",
+                "value": "zk-provider"
+              },
+              {
+                "key": "class",
+                "value": "org.apache.nifi.controller.state.providers.zookeeper.ZooKeeperStateProvider"
+              },
+              {
+                "key": "Session Timeout",
+                "value": "${state_management_zk_provider_session_timeout} seconds"
+              },
+              {
+                "key": "cdh.stateManagement.provider.type",
+                "value": "cluster-provider"
               }
             ]
           }
@@ -258,12 +315,43 @@
           "name": "state_management_local_provider_checkpoint_interval",
           "label": "State Management Local Provider Checkpoint Interval",
           "description": "The amount of time between checkpoints.",
-          "configName": "Checkpoint Interval",
           "required": true,
           "type": "long",
           "unit": "minutes",
           "min": 1,
           "default": 2
+        },
+        {
+          "name": "state_management_zk_provider_root_node",
+          "label": "State Management Zookeeper Provider Root Node",
+          "description": "The root node in ZooKeeper where state should be stored. The default is '/nifi', but it is advisable to change this to a different value if not using if multiple NiFi instances may all be using the same ZooKeeper Server.",
+          "configName": "Root Node",
+          "required": true,
+          "type": "path",
+          "conformRegex": "/.*",
+          "pathType": "serviceSpecific",
+          "default": "/nifi"
+        },
+        {
+          "name": "state_management_zk_provider_session_timeout",
+          "label": "State Management Zookeeper Provider Session Timeout",
+          "description": "Specifies how long this instance of NiFi is allowed to be disconnected from ZooKeeper before creating a new ZooKeeper Session.",
+          "required": true,
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "softMin": 10,
+          "default": 30
+        },
+        {
+          "name": "state_management_zk_provider_access_control",
+          "label": "State Management Zookeeper Provider Access Control",
+          "description": "Specifies which Access Controls will be applied to the ZooKeeper ZNodes that are created by this State Provider. This value must be set to one of: - Open  : ZNodes will be open to any ZooKeeper client.  - CreatorOnly  : ZNodes will be accessible only by the creator. The creator will have full access to create children, read, write, delete, and administer the ZNodes.  This option is available only if access to ZooKeeper is secured via Kerberos or if a Username and Password are set.",
+          "configName": "Access Control",
+          "required": true,
+          "type": "string",
+          "conformRegex": "Open|CreatorOnly",
+          "default": "Open"
         }
       ]
     }
