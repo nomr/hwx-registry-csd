@@ -198,7 +198,7 @@
 	    ]
           },
           {
-            "filename": "state-management-local-provider.xml",
+            "filename": "state-management-local-provider.hadoop_xml",
             "configFormat": "hadoop_xml",
             "includedParams": [
               "state_management_local_provider_directory",
@@ -225,7 +225,7 @@
             ]
           },
           {
-            "filename": "state-management-zk-provider.xml",
+            "filename": "state-management-zk-provider.hadoop_xml",
             "configFormat": "hadoop_xml",
             "includedParams": [
               "state_management_zk_provider_root_node",
@@ -261,8 +261,8 @@
             "sourceFilename": "aux/login-identity-providers.safety-valve-xml"
           },
           {
-            "filename": "state-management.xml",
-            "sourceFilename": "aux/state-management.safety-valve-xml"
+            "filename": "state-management-safety-valve.xml",
+            "sourceFilename": "aux/state-management-safety-valve.xml"
           }
         ]
       },

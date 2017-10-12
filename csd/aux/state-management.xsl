@@ -2,6 +2,7 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="configuration" >
+    <stateManagement>
     <xsl:choose>
       <xsl:when test="property[name='cdh.stateManagement.provider.type' and value='local-provider']">
         <xsl:comment>State Provider that stores state locally in a configurable directory.</xsl:comment>
@@ -16,6 +17,7 @@
         </cluster-provider>
       </xsl:when>
     </xsl:choose>
+    </stateManagement>
   </xsl:template>
 
   <xsl:template match="property">
