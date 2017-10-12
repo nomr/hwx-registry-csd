@@ -107,6 +107,7 @@ init() {
     # close aux generated config files
     close_xml_file "services" bootstrap-notification-services.xml
     close_xml_file "loginIdentityProviders" login-identity-providers.xml
+    close_xml_file "stateManagement" state-management.xml
 }
 
 init_bootstrap() {

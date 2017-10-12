@@ -182,6 +182,10 @@
           {
             "filename": "login-identity-providers.xml",
             "sourceFilename": "aux/login-identity-providers.safety-valve-xml"
+          },
+          {
+            "filename": "state-management.xml",
+            "sourceFilename": "aux/state-management.safety-valve-xml"
           }
         ]
       },

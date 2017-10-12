@@ -130,5 +130,3 @@
             <property name="Connection String">localhost:6379</property>
         </cluster-provider>
     -->
-
-</stateManagement>
