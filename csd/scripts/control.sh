@@ -17,6 +17,8 @@
 
 # Script structure inspired from Apache Karaf and other Apache projects with similar startup approaches
 
+set -efu -o pipefail
+
 . ${COMMON_SCRIPT}
 
 warn() {
@@ -30,28 +32,24 @@ die() {
 
 unlimitFD() {
     # Use the maximum available, or set MAX_FD != -1 to use that
-    if [ "x${MAX_FD}" = "x" ]; then
-        MAX_FD="maximum"
-    fi
+    MAX_FD=${MAX_FD:="maximum"}
 
     # Increase the maximum file descriptors if we can
-    if [ "${os400}" = "false" ] && [ "${cygwin}" = "false" ]; then
-        MAX_FD_LIMIT=$(ulimit -H -n)
-        if [ "${MAX_FD_LIMIT}" != 'unlimited' ]; then
-            if [ $? -eq 0 ]; then
-                if [ "${MAX_FD}" = "maximum" -o "${MAX_FD}" = "max" ]; then
-                    # use the system max
-                    MAX_FD="${MAX_FD_LIMIT}"
-                fi
-
-                ulimit -n ${MAX_FD} > /dev/null
-                # echo "ulimit -n" `ulimit -n`
-                if [ $? -ne 0 ]; then
-                    warn "Could not set maximum file descriptor limit: ${MAX_FD}"
-                fi
-            else
-                warn "Could not query system maximum file descriptor limit: ${MAX_FD_LIMIT}"
+    MAX_FD_LIMIT=$(ulimit -H -n)
+    if [ "${MAX_FD_LIMIT}" != 'unlimited' ]; then
+        if [ $? -eq 0 ]; then
+            if [ "${MAX_FD}" = "maximum" -o "${MAX_FD}" = "max" ]; then
+                # use the system max
+                MAX_FD="${MAX_FD_LIMIT}"
             fi
+
+            ulimit -n ${MAX_FD} > /dev/null
+            # echo "ulimit -n" `ulimit -n`
+            if [ $? -ne 0 ]; then
+                warn "Could not set maximum file descriptor limit: ${MAX_FD}"
+            fi
+        else
+            warn "Could not query system maximum file descriptor limit: ${MAX_FD_LIMIT}"
         fi
     fi
 }
@@ -63,6 +61,7 @@ locate_java8_home() {
     fi
 
     JAVA="${JAVA_HOME}/bin/java"
+    TOOLS_JAR=""
 
     # if command is env, attempt to add more to the classpath
     if [ "$1" = "env" ]; then
@@ -107,6 +106,22 @@ init() {
     # close aux generated config files
     close_xml_file "services" bootstrap-notification-services.xml
     close_xml_file "loginIdentityProviders" login-identity-providers.xml
+
+    [ -e 'state-management.xml' ] || create_state_management_xml
+}
+
+create_state_management_xml() {
+
+    xsltproc -o state-management-local-provider.xml aux/state-management.xsl state-management-local-provider.hadoop_xml \
+        && rm -f state-management-local-provider.hadoop_xml
+    xsltproc -o state-management-zk-provider.xml aux/state-management.xsl state-management-zk-provider.hadoop_xml \
+        && rm -f state-management-zk-provider.hadoop_xml
+    close_xml_file "stateManagement" state-management-safety-valve.xml
+
+    xsltproc -o state-management-local-zk-providers.xml --param with "'state-management-zk-provider.xml'" aux/merge.xslt state-management-local-provider.xml  \
+        && rm -f state-management-{local,zk}-provider.xml
+    xsltproc -o state-management.xml --param with "'state-management-safety-valve.xml'" aux/merge.xslt state-management-local-zk-providers.xml \
+        && rm -f state-management-local-zk-providers.xml state-management-safety-valve.xml
 }
 
 init_bootstrap() {
@@ -114,7 +129,7 @@ init_bootstrap() {
     BOOTSTRAP_LIBS=`find "${CDH_NIFI_HOME}/lib/bootstrap" -maxdepth 1 -name '*.jar' | tr "\n" ":"`
     #BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
 
-    BOOTSTRAP_CLASSPATH="${BOOTSTRAP_CONF_DIR}:${BOOTSTRAP_LIBS}"
+    BOOTSTRAP_CLASSPATH="${CONF_DIR}:${BOOTSTRAP_LIBS}"
     if [ -n "${TOOLS_JAR}" ]; then
         BOOTSTRAP_CLASSPATH="${TOOLS_JAR}:${BOOTSTRAP_CLASSPATH}"
     fi

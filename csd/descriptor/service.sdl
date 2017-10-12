@@ -172,6 +172,83 @@
                 "value": ""
               }
             ]
+          },
+          {
+            "filename": "nifi-future.conf",
+            "configFormat": "properties",
+            "includedParams": [
+            ],
+            "additionalConfigs": [
+              {
+                "key": "nifi.state.management.configuration.file",
+                "value": "./state-management.xml"
+              },
+              {
+                "key": "nifi.state.management.provider.local",
+                "value": "local-provider"
+              },
+              {
+                "key": "nifi.state.management.provider.cluster",
+                "value": "zk-provider"
+              },
+              {
+                "key": "nifi.state.management.embedded.zookeeper.start",
+                "value": "false"
+              }
+	    ]
+          },
+          {
+            "filename": "state-management-local-provider.hadoop_xml",
+            "configFormat": "hadoop_xml",
+            "includedParams": [
+              "state_management_local_provider_directory",
+              "state_management_local_provider_always_sync",
+              "state_management_local_provider_partitions"
+            ],
+            "additionalConfigs": [
+              {
+                "key": "id",
+                "value": "local-provider"
+              },
+              {
+                "key": "class",
+                "value": "org.apache.nifi.controller.state.providers.local.WriteAheadLocalStateProvider"
+              },
+              {
+                "key": "Checkpoint Interval",
+                "value": "${state_management_local_provider_checkpoint_interval} mins"
+              },
+              {
+                "key": "cdh.stateManagement.provider.type",
+                "value": "local-provider"
+              }
+            ]
+          },
+          {
+            "filename": "state-management-zk-provider.hadoop_xml",
+            "configFormat": "hadoop_xml",
+            "includedParams": [
+              "state_management_zk_provider_root_node",
+              "state_management_zk_provider_access_control"
+            ],
+            "additionalConfigs": [
+              {
+                "key": "id",
+                "value": "zk-provider"
+              },
+              {
+                "key": "class",
+                "value": "org.apache.nifi.controller.state.providers.zookeeper.ZooKeeperStateProvider"
+              },
+              {
+                "key": "Session Timeout",
+                "value": "${state_management_zk_provider_session_timeout} seconds"
+              },
+              {
+                "key": "cdh.stateManagement.provider.type",
+                "value": "cluster-provider"
+              }
+            ]
           }
         ],
         "auxConfigGenerators": [
@@ -182,6 +259,10 @@
           {
             "filename": "login-identity-providers.xml",
             "sourceFilename": "aux/login-identity-providers.safety-valve-xml"
+          },
+          {
+            "filename": "state-management-safety-valve.xml",
+            "sourceFilename": "aux/state-management-safety-valve.xml"
           }
         ]
       },
@@ -192,11 +273,85 @@
           "description": "How long to wait after telling NiFi to shutdown before explicitly killing the Process",
           "configName": "graceful.shutdown.seconds",
           "required": true,
-          "default": 20,
           "type": "long",
-          "min": 0,
+          "unit": "seconds",
+          "min": 1,
           "softMin": 20,
-          "unit": "seconds"
+          "default": 20
+        },
+        {
+          "name": "state_management_local_provider_directory",
+          "label": "State Management Local Provider Directory",
+          "description": "The directory to store components' state in.",
+          "configName": "Directory",
+          "required": true,
+          "configurableInWizard": true,
+          "type": "path",
+          "conformRegex": "/.*",
+          "pathType": "localDataDir",
+          "mode": "0750",
+          "default": "/var/run/nifi/state/local"
+        },
+        {
+          "name": "state_management_local_provider_always_sync",
+          "label": "State Management Local Provider Always Sync",
+          "description": "Always Sync - If set to true, any change to the repository will be synchronized to the disk, meaning that NiFi will ask the operating system not to cache the information. This is very expensive and can significantly reduce NiFi performance. However, if it is false, there could be the potential for data loss if either there is a sudden power loss or the operating system crashes. The default value is false.",
+          "configName": "Always Sync",
+          "required": true,
+          "type": "boolean",
+          "default": "false"
+        },
+        {
+          "name": "state_management_local_provider_partitions",
+          "label": "State Management Local Provider Number of Partitions",
+          "description": "The number of partitions.",
+          "configName": "Partitions",
+          "required": true,
+          "type": "long",
+          "min": 1,
+          "default": 16
+        },
+        {
+          "name": "state_management_local_provider_checkpoint_interval",
+          "label": "State Management Local Provider Checkpoint Interval",
+          "description": "The amount of time between checkpoints.",
+          "required": true,
+          "type": "long",
+          "unit": "minutes",
+          "min": 1,
+          "default": 2
+        },
+        {
+          "name": "state_management_zk_provider_root_node",
+          "label": "State Management Zookeeper Provider Root Node",
+          "description": "The root node in ZooKeeper where state should be stored. The default is '/nifi', but it is advisable to change this to a different value if not using if multiple NiFi instances may all be using the same ZooKeeper Server.",
+          "configName": "Root Node",
+          "required": true,
+          "type": "path",
+          "conformRegex": "/.*",
+          "pathType": "serviceSpecific",
+          "default": "/nifi"
+        },
+        {
+          "name": "state_management_zk_provider_session_timeout",
+          "label": "State Management Zookeeper Provider Session Timeout",
+          "description": "Specifies how long this instance of NiFi is allowed to be disconnected from ZooKeeper before creating a new ZooKeeper Session.",
+          "required": true,
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "softMin": 10,
+          "default": 30
+        },
+        {
+          "name": "state_management_zk_provider_access_control",
+          "label": "State Management Zookeeper Provider Access Control",
+          "description": "Specifies which Access Controls will be applied to the ZooKeeper ZNodes that are created by this State Provider. This value must be set to one of: - Open  : ZNodes will be open to any ZooKeeper client.  - CreatorOnly  : ZNodes will be accessible only by the creator. The creator will have full access to create children, read, write, delete, and administer the ZNodes.  This option is available only if access to ZooKeeper is secured via Kerberos or if a Username and Password are set.",
+          "configName": "Access Control",
+          "required": true,
+          "type": "string",
+          "conformRegex": "Open|CreatorOnly",
+          "default": "Open"
         }
       ]
     }
