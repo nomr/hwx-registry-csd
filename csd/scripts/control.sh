@@ -86,7 +86,9 @@ close_xml_file() {
     XML_TAG=$1
     FILE=$2
 
-    if ! tail ${FILE} | grep -c "^</${XML_TAG}>$" > /dev/null; then
+    if [ ! -e $FILE ]; then
+        return 0
+    elif ! tail ${FILE} | grep -c "^</${XML_TAG}>$" > /dev/null; then
         echo "</${XML_TAG}>" >> ${FILE}
     fi
 }
@@ -108,6 +110,75 @@ init() {
     close_xml_file "loginIdentityProviders" login-identity-providers.xml
 
     [ -e 'state-management.xml' ] || create_state_management_xml
+    [ -e 'authorizers.xml' ] || create_authorizers_xml
+}
+
+create_authorizers_xml() {
+    merge=aux/merge.xslt
+    
+    # Transform all hadoop_xml files
+    xslt=aux/authorizers.xslt
+    for h_xml in `find . -type f -name 'authorizers-*.hadoop_xml'`; do
+        local in=${h_xml}
+        local out=${h_xml//hadoop_xml/xml}
+        xsltproc -o ${out} ${xslt} ${in}
+        rm -f ${in}
+    done
+
+    # Close all all safety-valve files
+    for sv_xml in `find . -type f -name 'authorizers-*safety-valve.xml'`; do
+        close_xml_file "authorizers" ${sv_xml}
+    done
+
+     
+    # Merge with User Group Providers
+    prefix=authorizers-user-group-provider
+    in_a=${prefix}-file.xml
+    in_b=${prefix}-safety-valve.xml
+    out=${prefix}.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             --param dontmerge "'userGroupProvider'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
+
+    # Merge with Access Policy Providers
+    prefix=authorizers-access-policy-provider
+    in_a=${out}
+    in_b=${prefix}-file.xml
+    out=${prefix}-1.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
+
+    in_a=${out}
+    in_b=${prefix}-safety-valve.xml
+    out=${prefix}.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             --param dontmerge "'accessPolicyProvider'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
+
+    # Merge with Authorizers
+    prefix=authorizers-authorizer
+    in_a=${out}
+    in_b=${prefix}-managed.xml
+    out=${prefix}-1.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
+ 
+    in_a=${out}
+    in_b=${prefix}-safety-valve.xml
+    out=authorizers.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             --param dontmerge "'authorizer'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
 }
 
 create_state_management_xml() {
