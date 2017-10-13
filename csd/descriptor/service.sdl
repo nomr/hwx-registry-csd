@@ -287,6 +287,7 @@
               "nifi_swap_queue_threshold",
               "nifi_swap_in_threads",
               "nifi_swap_out_threads",
+              "nifi_components_status_repository_buffer_size",
               "nifi_remote_input_host",
               "nifi_remote_input_secure",
               "nifi_remote_input_socket_port",
@@ -386,6 +387,14 @@
               {
                 "key": "nifi.swap.out.period",
                 "value": "${nifi_swap_out_period} sec"
+              },
+              {
+                "key": "nifi.components.status.repository.implementation",
+                "value": "org.apache.nifi.controller.status.history.VolatileComponentStatusRepository"
+              },
+              {
+                "key": "nifi.components.status.snapshot.frequency",
+                "value": "${nifi_components_status_snapshot_frequency} min"
               },
               {
                 "key": "nifi.remote.input.http.transaction.ttl",
@@ -782,6 +791,24 @@
           "type": "long",
           "min": 1,
           "default": 4
+         },
+         {
+           "name": "nifi_components_status_repository_buffer_size",
+           "label": "Components Status Repository Buffer Size",
+           "description": "Specifies the buffer size for the Component Status Repository.",
+           "configName": "nifi.components.status.repository.buffer.size",
+           "type": "long",
+           "min": 1,
+           "default": 1440
+         },
+         {
+           "name": "nifi_components_status_snapshot_frequency",
+           "label": "Components Status Respository Snapshot Frequency",
+           "description": "This value indicates how often to present a snapshot of the components' status history.",
+           "type": "long",
+           "unit": "minutes",
+           "min": 1,
+           "default": 1
          },
          {
            "name": "nifi_remote_input_host",
