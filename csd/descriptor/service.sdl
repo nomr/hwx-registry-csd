@@ -271,7 +271,7 @@
             ]
           },
           {
-            "filename": "nifi-future.properties",
+            "filename": "nifi.properties",
             "configFormat": "properties",
             "includedParams": [
               "nifi_flow_configuration_archive_enabled",

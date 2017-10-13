@@ -119,18 +119,28 @@ init() {
     # NiFi 1.4.0 was compiled with 1.8.0
     locate_java8_home $1
 
-    # Init configuration files
-    init_bootstrap
-    init_logback_xml
- 
-    # close aux generated config files
+    # Simulate NIFI_HOME
+    [ -d conf ] || mkdir conf
+    [ -e lib ] || ln -s ${CDH_NIFI_HOME}/lib .
+    [ -e docs ] || ln -s ${CDH_NIFI_HOME}/docs .
+
+    # Update bootstrap files
+    update_bootstrap_conf
     close_xml_file "services" bootstrap-notification-services.xml
+
 
     [ -e 'login-identity-providers.xml' ] || create_login_identity_providers_xml
     [ -e 'state-management.xml' ] || create_state_management_xml
     [ -e 'authorizers.xml' ] || create_authorizers_xml
 
+    update_logback_xml
     update_nifi_properties
+
+    find ${CONF_DIR} -maxdepth 1 -type f -name '*.conf' -exec ln -sf {} ${CONF_DIR}/conf \;
+    find ${CONF_DIR} -maxdepth 1 -type f -name '*.xml' -exec ln -sf {} ${CONF_DIR}/conf \;
+    find ${CONF_DIR} -maxdepth 1 -type f -name '*.properties' -exec ln -sf {} ${CONF_DIR}/conf \;
+
+    init_bootstrap
 }
 
 create_login_identity_providers_xml() {
@@ -237,13 +247,12 @@ create_state_management_xml() {
 update_nifi_properties() {
     sed -i \
         -e "s|@@CDH_NIFI_HOME@@|${CDH_NIFI_HOME}|g" \
-        nifi-future.properties
+        nifi.properties
 }
 
 init_bootstrap() {
-    BOOTSTRAP_CONF="${CONF_DIR}/bootstrap.conf";
-    BOOTSTRAP_LIBS=`find "${CDH_NIFI_HOME}/lib/bootstrap" -maxdepth 1 -name '*.jar' | tr "\n" ":"`
-    #BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
+    #BOOTSTRAP_LIBS=`find "${CDH_NIFI_HOME}/lib/bootstrap" -maxdepth 1 -name '*.jar' | tr "\n" ":"`
+    BOOTSTRAP_LIBS="${CDH_NIFI_HOME}/lib/bootstrap/*"
 
     BOOTSTRAP_CLASSPATH="${CONF_DIR}:${BOOTSTRAP_LIBS}"
     if [ -n "${TOOLS_JAR}" ]; then
@@ -253,24 +262,16 @@ init_bootstrap() {
     #setup directory parameters
     BOOTSTRAP_LOG_PARAMS="-Dorg.apache.nifi.bootstrap.config.log.dir='${NIFI_LOG_DIR}'"
     BOOTSTRAP_PID_PARAMS="-Dorg.apache.nifi.bootstrap.config.pid.dir='${NIFI_PID_DIR}'"
-    BOOTSTRAP_CONF_PARAMS="-Dorg.apache.nifi.bootstrap.config.file='${BOOTSTRAP_CONF}'"
+    BOOTSTRAP_CONF_PARAMS="-Dorg.apache.nifi.bootstrap.config.file='${CONF_DIR}/conf/bootstrap.conf'"
 
     BOOTSTRAP_DIR_PARAMS="${BOOTSTRAP_LOG_PARAMS} ${BOOTSTRAP_PID_PARAMS} ${BOOTSTRAP_CONF_PARAMS}"
-
-    update_bootstrap_conf
-
-    echo
-    echo "Java home: ${JAVA_HOME}"
-    echo "NiFi home: ${NIFI_HOME}"
-    echo
-    echo "Bootstrap Config File: ${BOOTSTRAP_CONF}"
-    echo
 }
 
 update_bootstrap_conf() {
+    BOOTSTRAP_CONF="${CONF_DIR}/bootstrap.conf";
     # Update bootstrap.conf
-    insert_if_not_exists "lib.dir=${CDH_NIFI_HOME}/lib" ${BOOTSTRAP_CONF}
-    insert_if_not_exists "conf.dir=${CONF_DIR}" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "lib.dir=${CONF_DIR}/lib" ${BOOTSTRAP_CONF}
+    insert_if_not_exists "conf.dir=${CONF_DIR}/conf" ${BOOTSTRAP_CONF}
 
     # Disable JSR 199 so that we can use JSP's without running a JDK
     insert_if_not_exists "java.arg.1=-Dorg.apache.jasper.compiler.disablejsr199=true" ${BOOTSTRAP_CONF}
@@ -298,7 +299,7 @@ update_bootstrap_conf() {
     insert_if_not_exists "java.arg.15=-Djava.security.egd=file:/dev/urandom" ${BOOTSTRAP_CONF}
 }
 
-init_logback_xml() {
+update_logback_xml() {
     sed -i 's/<configuration>/<configuration scan="true" scanPeriod="30 seconds">/' logback.xml
 }
 
