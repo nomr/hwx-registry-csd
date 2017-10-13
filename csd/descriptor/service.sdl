@@ -315,13 +315,22 @@
 
               "nifi_provenance_repository_buffer_size",
 
-
               "nifi_components_status_repository_buffer_size",
 
               "nifi_remote_input_host",
               "nifi_remote_input_secure",
               "nifi_remote_input_socket_port",
               "nifi_remote_input_http_enabled",
+
+              "nifi_web_http_host",
+              "nifi_web_http_port",
+              "nifi_web_http_port_forwarding",
+              "nifi_web_http_network_interface_default",
+              "nifi_web_https_host",
+              "nifi_web_https_port",
+              "nifi_web_https_port_forwarding",
+              "nifi_web_https_network_interface_default",
+              "nifi_web_jetty_threads",
 
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
@@ -472,7 +481,17 @@
               {
                 "key": "nifi.remote.input.http.transaction.ttl",
                 "value": "${nifi_remote_input_http_transaction_ttl} sec"
+              },
+
+              {
+                "key": "nifi.web.war.directory",
+                "value": "@@CDH_NIFI_HOME@@/lib"
+              },
+              { 
+                "key": "nifi.web.jetty.working.directory",
+                "value": "${nifi_home}/work/jetty"
               }
+
 	    ]
           },
           {
@@ -1203,6 +1222,86 @@
            "min": 1,
            "default": 30
          },
+
+         {
+           "name": "nifi_web_http_host",
+           "label": "HTTP host",
+           "description": "The HTTP host.",
+           "configName": "nifi.web.http.host",
+           "required": false,
+           "type": "string"
+         },
+         {
+           "name": "nifi_web_http_port",
+           "label": "HTTP port",
+           "description": "The HTTP port",
+           "configName": "nifi.web.http.port",
+           "required": false,
+           "type": "port",
+           "min": 1024,
+           "default": 8080
+         },
+         {
+           "name": "nifi_web_http_port_forwarding",
+           "label": "HTTP Forwarded Port",
+           "description": "The port which forwards incoming HTTP requests to nifi.web.http.host. This property is designed to be used with port forwarding, when NiFi has to be started by a non-root user for better security, yet it needs to be accessed via low port to go through a firewall. For example, to expose NiFi via HTTP protocol on port 80, but actually listening on port 8080, you need to configure OS level port forwarding such as iptables (Linux/Unix) or pfctl (OS X) that redirects requests from 80 to 8080. Then set nifi.web.http.port as 8080, and nifi.web.http.port.forwarding as 80. It is blank by default.",
+           "configName": "nifi.web.http.port.forwarding",
+           "required": false,
+           "type": "port",
+           "min": 1
+         },
+         {
+           "name": "nifi_web_http_network_interface_default",
+           "label": "HTTP Default Network Interface",
+           "description": "The name of the network interface to which NiFi should bind for HTTP requests.",
+           "configName": "nifi.web.http.network.interface.default",
+           "required": false,
+           "type": "string"
+         },
+         {
+           "name": "nifi_web_https_host",
+           "label": "HTTPS Host",
+           "description": "The HTTPS host",
+           "configName": "nifi.web.https.host",
+           "required": false,
+           "type": "string"
+         },
+         {
+           "name": "nifi_web_https_port",
+           "label": "HTTPS Port",
+           "description": "The HTTPS port",
+           "configName": "nifi.web.https.port",
+           "type": "port",
+           "min": 1024
+         },
+         {
+           "name": "nifi_web_https_port_forwarding",
+           "label": "HTTP Forwarded Port",
+           "description": "Same as nifi.web.http.port.forwarding, but with HTTPS for secure communication. It is blank by default.",
+           "configName": "nifi.web.https.port.forwarding",
+           "required": false,
+           "type": "port",
+           "min": 1
+         },
+         {
+           "name": "nifi_web_https_network_interface_default",
+           "label": "HTTPS Default Network Interface",
+           "description": "The name of the network interface to which NiFi should bind for HTTPS requests.",
+           "configName": "nifi.web.https.network.interface.default",
+           "required": false,
+           "type": "string"
+         },
+         {
+           "name": "nifi_web_jetty_threads",
+           "label": "HTTP(S) Number of Threads",
+           "description": "The number of Jetty threads.",
+           "configName": "nifi.web.jetty.threads",
+           "required": true,
+           "type": "long",
+           "min": 1,
+           "default": 200
+         },
+
          {
           "name": "state_management_local_provider_directory",
           "label": "State Management Local Provider Directory",
