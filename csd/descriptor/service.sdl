@@ -249,12 +249,17 @@
             "filename": "nifi-future.conf",
             "configFormat": "properties",
             "includedParams": [
-              "nifi_security_user_authorizer"
+              "nifi_security_user_authorizer",
+              "nifi_security_user_login_identity_provider"
             ],
             "additionalConfigs": [
               {
                 "key": "nifi.authorizer.configuration.file",
                 "value": "./authorizers.xml"
+              },
+              {
+                "key": "nifi.login.identity.provider.configuration.file",
+                "value": "./login-identity-providers.xml"
               },
               {
                 "key": "nifi.state.management.configuration.file",
@@ -413,10 +418,18 @@
           "name": "nifi_security_user_authorizer",
           "label": "Security User Authorizer",
           "description": "The identififer of the desired authorizer in authorizers.xml (or safety valve).",
-          "configName": "nifi.serurity.user.authorizer",
+          "configName": "nifi.security.user.authorizer",
           "required": true,
           "type": "string",
           "default": "managed-authorizer"
+        },
+        {
+          "name": "nifi_security_user_login_identity_provider",
+          "label": "Security User Login Identity Provider",
+          "description": "The identififer of the desired Login Identity Provider in login-identity-provider.xml (or safety valve).",
+          "configName": "nifi.security.user.login.identity.provider",
+          "required": false,
+          "type": "string"
         },
         {
           "name": "state_management_local_provider_directory",
