@@ -287,6 +287,10 @@
               "nifi_swap_queue_threshold",
               "nifi_swap_in_threads",
               "nifi_swap_out_threads",
+              "nifi_remote_input_host",
+              "nifi_remote_input_secure",
+              "nifi_remote_input_socket_port",
+              "nifi_remote_input_http_enabled",
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
@@ -382,6 +386,10 @@
               {
                 "key": "nifi.swap.out.period",
                 "value": "${nifi_swap_out_period} sec"
+              },
+              {
+                "key": "nifi.remote.input.http.transaction.ttl",
+                "value": "${nifi_remote_input_http_transaction_ttl} sec"
               }
 	    ]
           },
@@ -775,7 +783,52 @@
           "min": 1,
           "default": 4
          },
-        {
+         {
+           "name": "nifi_remote_input_host",
+           "label": "Site-to-Site Hostname",
+           "description": "The host name that will be given out to clients to connect to this NiFi instance for Site-to-Site communication. By default, it is the value from InetAddress.getLocalHost().getHostName(). On UNIX-like operating systems, this is typically the output from the hostname command.",
+           "configName": "nifi.remote.input.host",
+           "required": false,
+           "type": "string"
+         },
+         {
+           "name": "nifi_remote_input_secure",
+           "label": "Site-to-Site Use SSL",
+           "description": "This indicates whether communication between this instance of NiFi and remote NiFi instances should be secure. By default, it is set to false. In order for secure site-to-site to work, set the property to true. Many other Security Properties (below) must also be configured.",
+           "configName": "nifi.remote.input.secure",
+           "required": true,
+           "type": "boolean",
+           "default": false
+         },
+         {
+           "name": "nifi_remote_input_socket_port",
+           "label": "Site-to-Site Port Number",
+           "description": "The remote input socket port for Site-to-Site communication. By default, it is blank, but it must have a value in order to use RAW socket as transport protocol for Site-to-Site.",
+           "configName": "nifi.remote.input.socket.port",
+           "required": false,
+           "type": "port",
+           "min": 1024
+         },
+         {
+           "name": "nifi_remote_input_http_enabled",
+           "label": "Site-to-Site HTTP(S) Enabled",
+           "description": "Specifies whether HTTP Site-to-Site should be enabled on this host. By default, it is set to true. Whether a Site-to-Site client uses HTTP or HTTPS is determined by nifi.remote.input.secure. If it is set to true, then requests are sent as HTTPS to nifi.web.https.port. If set to false, HTTP requests are sent to nifi.web.http.port.",
+           "configName": "nifi.remote.input.http.enabled",
+           "required": true,
+           "type": "boolean",
+           "default": true
+         },
+         {
+           "name": "nifi_remote_input_http_transaction_ttl",
+           "label": "Site-to-Site HTTP Transaction TTL",
+           "description": "Specifies how long a transaction can stay alive on the server. By default, it is set to 30 secs. If a Site-to-Site client hasn’t proceeded to the next action after this period of time, the transaction is discarded from the remote NiFi instance. For example, when a client creates a transaction but doesn’t send or receive flow files, or when a client sends or receives flow files but doesn’t confirm that transaction.",
+           "required": true,
+           "type": "long",
+           "unit": "seconds",
+           "min": 1,
+           "default": 30
+         },
+         {
           "name": "state_management_local_provider_directory",
           "label": "State Management Local Provider Directory",
           "description": "The directory to store components' state in.",
