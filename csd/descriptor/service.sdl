@@ -284,6 +284,9 @@
               "nifi_flowfile_repository_directory",
               "nifi_flowfile_repository_partitions",
               "nifi_flowfile_repository_always_sync",
+              "nifi_swap_queue_threshold",
+              "nifi_swap_in_threads",
+              "nifi_swap_out_threads",
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
@@ -367,6 +370,18 @@
               {
                 "key": "nifi.flowfile.repository.checkpoint.interval",
                 "value": "${nifi_flowfile_repository_checkpoint_interval} mins"
+              },
+              {
+                "key": "nifi.swap.manager.implementation",
+                "value": "org.apache.nifi.controller.FileSystemSwapManager"
+              },
+              {
+                "key": "nifi.swap.in.period",
+                "value": "${nifi_swap_in_period} sec"
+              },
+              {
+                "key": "nifi.swap.out.period",
+                "value": "${nifi_swap_out_period} sec"
               }
 	    ]
           },
@@ -715,6 +730,51 @@
            "type": "boolean",
            "default": "false"
         },
+        {
+          "name": "nifi_swap_queue_threshold",
+          "label": "Queue Swap Threshold",
+          "description": "The queue threshold at which NiFi starts to swap FlowFile information to disk.",
+          "configName": "nifi.queue.swap.threshold",
+          "type": "long",
+          "min": 1,
+          "default": 20000
+        },
+        {
+          "name": "nifi_swap_in_period",
+          "label": "Swap in period",
+          "description": "The swap in period.",
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "default": 5
+        },
+        {
+          "name": "nifi_swap_in_threads",
+          "label": "Swap in threads",
+          "description": "The number of threads to use for swapping in",
+          "configName": "nifi.swap.in.threads",
+          "type": "long",
+          "min": 1,
+          "default": 1
+         },
+         {
+          "name": "nifi_swap_out_period",
+          "label": "Swap out period",
+          "description": "The swap out period.",
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "default": 5
+        },
+        {
+          "name": "nifi_swap_out_threads",
+          "label": "Swap out threads",
+          "description": "The number of threads to use for swapping out",
+          "configName": "nifi.swap.out.threads",
+          "type": "long",
+          "min": 1,
+          "default": 4
+         },
         {
           "name": "state_management_local_provider_directory",
           "label": "State Management Local Provider Directory",
