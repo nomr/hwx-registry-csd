@@ -249,8 +249,13 @@
             "filename": "nifi-future.conf",
             "configFormat": "properties",
             "includedParams": [
+              "nifi_security_user_authorizer"
             ],
             "additionalConfigs": [
+              {
+                "key": "nifi.authorizer.configuration.file",
+                "value": "./authorizers.xml"
+              },
               {
                 "key": "nifi.state.management.configuration.file",
                 "value": "./state-management.xml"
@@ -403,6 +408,15 @@
           "min": 1,
           "softMin": 20,
           "default": 20
+        },
+        {
+          "name": "nifi_security_user_authorizer",
+          "label": "Security User Authorizer",
+          "description": "The identififer of the desired authorizer in authorizers.xml (or safety valve).",
+          "configName": "nifi.serurity.user.authorizer",
+          "required": true,
+          "type": "string",
+          "default": "managed-authorizer"
         },
         {
           "name": "state_management_local_provider_directory",

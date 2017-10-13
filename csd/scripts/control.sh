@@ -173,7 +173,7 @@ create_authorizers_xml() {
  
     in_a=${out}
     in_b=${prefix}-safety-valve.xml
-    out=authorizer.xml
+    out=authorizers.xml
     xsltproc -o ${out} \
              --param with "'${in_b}'" \
              --param dontmerge "'authorizer'" \
