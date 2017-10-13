@@ -246,15 +246,45 @@
             ]
           },
           {
+            "filename": "login-identity-providers-kerberos.hadoop_xml",
+            "configFormat": "hadoop_xml",
+            "includedParams": [
+              "login_identity_providers_kerberos_default_realm"
+            ],
+            "additionalConfigs": [
+              {
+                "key": "identifier",
+                "value": "kerberos-provider"
+              },
+              {
+                "key": "class",
+                "value": "org.apache.nifi.kerberos.KerberosProvider"
+              },
+              {
+                "key": "Authentication Expiration",
+                "value": "${login_identity_providers_kerberos_authentication_expiration} hours"
+              },
+              {
+                "key": "cdh.login.identity.providers.type",
+                "value": "provider"
+              }
+            ]
+          },
+          {
             "filename": "nifi-future.conf",
             "configFormat": "properties",
             "includedParams": [
-              "nifi_security_user_authorizer"
+              "nifi_security_user_authorizer",
+              "nifi_security_user_login_identity_provider"
             ],
             "additionalConfigs": [
               {
                 "key": "nifi.authorizer.configuration.file",
                 "value": "./authorizers.xml"
+              },
+              {
+                "key": "nifi.login.identity.provider.configuration.file",
+                "value": "./login-identity-providers.xml"
               },
               {
                 "key": "nifi.state.management.configuration.file",
@@ -346,8 +376,8 @@
             "sourceFilename": "aux/bootstrap-notification-services.safety-valve-xml"
           },
           {
-            "filename": "login-identity-providers.xml",
-            "sourceFilename": "aux/login-identity-providers.safety-valve-xml"
+            "filename": "login-identity-providers-safety-valve.xml",
+            "sourceFilename": "aux/login-identity-providers-safety-valve.xml"
           },
           {
             "filename": "state-management-safety-valve.xml",
@@ -410,13 +440,41 @@
           "default": 20
         },
         {
+          "name": "login_identity_providers_kerberos_default_realm",
+          "label": "Login Kerberos Identity Provider Default Realm",
+          "description": "Default realm to provide when user enters incomplete user principal.",
+          "configName": "Default Realm",
+          "required": false,
+          "type": "string",
+          "default": "HADOOP.APACHE.ORG"
+        },
+        {
+          "name": "login_identity_providers_kerberos_authentication_expiration",
+          "label": "Login Kerberos Identity Provider Authentication Expiration",
+          "description": "The duration of how long the user authentication is valid for. If the user never logs out, they will be required to log back in following this duration.",
+          "required": false,
+          "type": "long",
+          "unit": "hours",
+          "min": 1,
+          "default": "12"
+        },
+        {
           "name": "nifi_security_user_authorizer",
           "label": "Security User Authorizer",
           "description": "The identififer of the desired authorizer in authorizers.xml (or safety valve).",
-          "configName": "nifi.serurity.user.authorizer",
+          "configName": "nifi.security.user.authorizer",
           "required": true,
           "type": "string",
           "default": "managed-authorizer"
+        },
+        {
+          "name": "nifi_security_user_login_identity_provider",
+          "label": "Security User Login Identity Provider",
+          "description": "The identififer of the desired Login Identity Provider in login-identity-provider.xml (or safety valve).",
+          "configName": "nifi.security.user.login.identity.provider",
+          "required": false,
+          "type": "string",
+          "conformRegex": "kerberos-provider|"
         },
         {
           "name": "state_management_local_provider_directory",

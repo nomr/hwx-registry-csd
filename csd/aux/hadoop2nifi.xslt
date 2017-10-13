@@ -2,7 +2,7 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="property">
-    <xsl:param name="element-keys">id class</xsl:param>
+    <xsl:param name="element-keys">identifier class</xsl:param>
     <xsl:choose>
       <xsl:when test="starts-with(name, 'cdh')"></xsl:when>
       <xsl:when test="contains(concat($element-keys, ' '), concat(name, ' '))">
