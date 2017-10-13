@@ -332,6 +332,8 @@
               "nifi_web_https_network_interface_default",
               "nifi_web_jetty_threads",
 
+              "nifi_sensitive_props_key",
+
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
@@ -490,6 +492,15 @@
               { 
                 "key": "nifi.web.jetty.working.directory",
                 "value": "${nifi_home}/work/jetty"
+              },
+
+              {
+                "key": "nifi.sensitive.props.algorithm",
+                "value": "PBEWITHMD5AND256BITAES-CBC-OPENSSL"
+              },
+              {
+                "key": "nifi.sensitive.props.provider",
+                "value": "BC"
               }
 
 	    ]
@@ -1300,6 +1311,16 @@
            "type": "long",
            "min": 1,
            "default": 200
+         },
+
+         {
+           "name": "nifi_sensitive_props_key",
+           "label": "Security Sensitive Prop Key",
+           "description": "This is the password used to encrypt any sensitive property values that are configured in processors. By default, it is blank, but the system administrator should provide a value for it. It can be a string of any length, although the recommended minimum length is 10 characters. Be aware that once this password is set and one or more sensitive processor properties have been configured, this password should not be changed.",
+           "configName": "nifi.sensitive.props.key",
+           "sensitive": true,
+           "required": true,
+           "type": "password"
          },
 
          {
