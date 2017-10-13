@@ -93,6 +93,24 @@ close_xml_file() {
     fi
 }
 
+close_prefix_safety_valve_xml() {
+    local prefix=$1
+    local xml_tag=$2
+
+    # close all safety-valve files
+    for sv_xml in `find . -type f -name "${prefix}-*safety-valve.xml"`; do
+        close_xml_file "${xml_tag}" ${sv_xml}
+    done
+}
+
+convert_prefix_hadoop_xml() {
+    local prefix=$1
+
+    for h_xml in `find . -type f -name "${prefix}-*.hadoop_xml"`; do
+        xsltproc -o ${h_xml//hadoop_xml/xml} aux/${prefix}.xslt ${h_xml}
+        rm -f ${h_xml}
+    done
+}
 
 init() {
     # Unlimit the number of file descriptors if possible
@@ -107,31 +125,39 @@ init() {
  
     # close aux generated config files
     close_xml_file "services" bootstrap-notification-services.xml
-    close_xml_file "loginIdentityProviders" login-identity-providers.xml
 
+    [ -e 'login-identity-providers.xml' ] || create_login_identity_providers_xml
     [ -e 'state-management.xml' ] || create_state_management_xml
     [ -e 'authorizers.xml' ] || create_authorizers_xml
 }
 
-create_authorizers_xml() {
+create_login_identity_providers_xml() {
+    prefix=login-identity-providers
+
+    convert_prefix_hadoop_xml ${prefix}
+
+    close_prefix_safety_valve_xml ${prefix} "loginIdentityProviders"
+
+    # Merge Providers
     merge=aux/merge.xslt
-    
-    # Transform all hadoop_xml files
-    xslt=aux/authorizers.xslt
-    for h_xml in `find . -type f -name 'authorizers-*.hadoop_xml'`; do
-        local in=${h_xml}
-        local out=${h_xml//hadoop_xml/xml}
-        xsltproc -o ${out} ${xslt} ${in}
-        rm -f ${in}
-    done
+    in_a=${prefix}-kerberos.xml
+    in_b=${prefix}-safety-valve.xml
+    out=${prefix}.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             --param dontmerge "'provider'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
+}
 
-    # Close all all safety-valve files
-    for sv_xml in `find . -type f -name 'authorizers-*safety-valve.xml'`; do
-        close_xml_file "authorizers" ${sv_xml}
-    done
+create_authorizers_xml() {
+    prefix=authorizers
+    convert_prefix_hadoop_xml ${prefix}
 
+    close_prefix_safety_valve_xml ${prefix} "authorizers"
      
     # Merge with User Group Providers
+    merge=aux/merge.xslt
     prefix=authorizers-user-group-provider
     in_a=${prefix}-file.xml
     in_b=${prefix}-safety-valve.xml
@@ -182,17 +208,28 @@ create_authorizers_xml() {
 }
 
 create_state_management_xml() {
+    prefix=state-management
+    convert_prefix_hadoop_xml ${prefix}
 
-    xsltproc -o state-management-local-provider.xml aux/state-management.xsl state-management-local-provider.hadoop_xml \
-        && rm -f state-management-local-provider.hadoop_xml
-    xsltproc -o state-management-zk-provider.xml aux/state-management.xsl state-management-zk-provider.hadoop_xml \
-        && rm -f state-management-zk-provider.hadoop_xml
-    close_xml_file "stateManagement" state-management-safety-valve.xml
+    close_prefix_safety_valve_xml ${prefix} "stateManagement"
 
-    xsltproc -o state-management-local-zk-providers.xml --param with "'state-management-zk-provider.xml'" aux/merge.xslt state-management-local-provider.xml  \
-        && rm -f state-management-{local,zk}-provider.xml
-    xsltproc -o state-management.xml --param with "'state-management-safety-valve.xml'" aux/merge.xslt state-management-local-zk-providers.xml \
-        && rm -f state-management-local-zk-providers.xml state-management-safety-valve.xml
+    # Merge
+    merge=aux/merge.xslt
+    in_a=${prefix}-local-provider.xml
+    in_b=${prefix}-zk-provider.xml
+    out=${prefix}-1.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
+
+    in_a=${out}
+    in_b=${prefix}-safety-valve.xml
+    out=${prefix}.xml
+    xsltproc -o ${out} \
+             --param with "'${in_b}'" \
+             ${merge} ${in_a}
+    rm -f ${in_a} ${in_b}
 }
 
 init_bootstrap() {

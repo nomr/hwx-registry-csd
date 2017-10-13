@@ -10,7 +10,7 @@
         </providers>
       </xsl:when>
     </xsl:choose>
-    </stateManagement>
+    </loginIdentityProviders>
   </xsl:template>
 
   <xsl:include href="hadoop2nifi.xslt"/>
