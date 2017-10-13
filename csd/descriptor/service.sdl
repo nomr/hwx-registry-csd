@@ -274,12 +274,47 @@
             "filename": "nifi-future.conf",
             "configFormat": "properties",
             "includedParams": [
+              "nifi_flow_configuration_archive_enabled",
+              "nifi_flow_configuration_archive_max_count",
+              "nifi_flowcontroller_auto_resume_state",
               "nifi_database_directory",
               "nifi_database_h2_url",
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
             "additionalConfigs": [
+              {
+                "key": "nifi.flow.configuration.file",
+                "value": "${nifi_home}/flow.xml.gz"
+              },
+              {
+                "key": "nifi.flow.configuration.archive.dir",
+                "value": "${nifi_home}/archive"
+              },
+              {
+                "key": "nifi.flow.configuration.archive.max.time",
+                "value": "${nifi_flow_configuration_archive_max_time} hours"
+              },
+              {
+                "key": "nifi.flow.configuration.archive.max.storage",
+                "value": "${nifi_flow_configuration_archive_max_storage} MB"
+              },
+              {
+                "key": "nifi.flowcontroller.graceful.shutdown.period",
+                "value": "${nifi_flowcontroller_graceful_shutdown_period} sec"
+              },
+              {
+                "key": "nifi.flowservice.writedelay.interval",
+                "value": "${nifi_flowservice_writedelay_interval} ms"
+              },
+              {
+                "key": "nifi.administrative.yield.duration",
+                "value": "${nifi_administrative_yield_duration} sec"
+              },
+              {
+                "key": "nifi.bored.yield.duration",
+                "value": "${nifi_bored_yield_duration} millis"
+              },
               {
                 "key": "nifi.authorizer.configuration.file",
                 "value": "./authorizers.xml"
@@ -459,6 +494,93 @@
           "unit": "hours",
           "min": 1,
           "default": "12"
+        },
+        {
+          "name": "nifi_flow_configuration_archive_enabled",
+          "label": "Flow Configuration Archive (on/off)",
+          "description": "whether to archive the flow configuration file",
+          "configName": "nifi.flow.configuration.archive.enabled",
+          "required": true,
+          "type": "boolean",
+          "default": "true"
+        },
+        {
+          "name": "nifi_flow_configuration_archive_max_time",
+          "label": "Flow Configuration Archive (Max Time)",
+          "description": "How long to retain archived flow configuration files.",
+          "required": true,
+          "type": "long",
+          "unit": "hours",
+          "min": 1,
+          "default": 720
+        },
+        {
+          "name": "nifi_flow_configuration_archive_max_storage",
+          "label": "Flow Configuration Archive (Max Storage)",
+          "description": "How much storage to reserve for archived flow configuration files.",
+          "required": true,
+          "type": "long",
+          "unit": "megabytes",
+          "min": 1,
+          "default": 500
+        },
+        {
+          "name": "nifi_flow_configuration_archive_max_count",
+          "label": "Flow Configuration Archive (Max Count)",
+          "description": "How long to keep archived flow configuration files.",
+          "configname": "nifi.flow.configuration.archive.max.time",
+          "required": false,
+          "type": "long",
+          "min": 1
+        },
+        {
+          "name": "nifi_flowcontroller_graceful_shutdown_period",
+          "label": "Flow Controller Graceful Shutdown Period",
+          "description": "Flow Controller Graceful Shutdown Period",
+          "required": true,
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "default": 10
+        },
+        {
+          "name": "nifi_flowcontroller_auto_resume_state",
+          "label": "Flow Controller Auto Resume State (on/off)",
+          "description": "Flow Controller Auto Resume State",
+          "configName": "nifi.flowcontroller.autoResumeState",
+          "required": true,
+          "type": "boolean",
+          "default": "true"
+        },
+        {
+          "name": "nifi_flowservice_writedelay_interval",
+          "label": "Flow Service Write Delay Interval",
+          "description": "Flow Service Write Delay Interval",
+          "required": true,
+          "type": "long",
+          "unit": "milliseconds",
+          "min": 1,
+          "default": 500
+        },
+        {
+          "name": "nifi_administrative_yield_duration",
+          "label": "Administrative Yield Duration",
+          "description": "Administrative Yield Duration",
+          "required": true,
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "default": 30
+        },
+        {
+          "name": "nifi_bored_yield_duration",
+          "label": "Bored Yield Duration",
+          "description": "If a component has no work to do (is \"bored\"), how long should we wait before checking again for work?",
+          "required": true,
+          "type": "long",
+          "unit": "milliseconds",
+          "min": 1,
+          "default": 10
         },
         {
           "name": "nifi_database_directory",
