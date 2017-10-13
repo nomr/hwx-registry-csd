@@ -38,6 +38,10 @@
 
   "inExpressWizard" : false,
 
+  "rolesWithExternalLinks": [
+    "NIFI_SERVER"
+  ],
+
   "parameters": [
     {
       "name": "java_home",
@@ -87,6 +91,11 @@
           "NIFI_PID_DIR": "${nifi_home}",
           "NIFI_LOG_DIR": "/var/log/nifi"
         }
+      },
+      "externalLink" : {
+        "name" : "webserver_web_ui",
+        "label" : "NiFi/HTTP UI",
+        "url" : "http://${host}:${nifi_web_http_port}/nifi"
       },
       "topology": {
         "minInstances": "1",
@@ -334,6 +343,13 @@
 
               "nifi_sensitive_props_key",
 
+              "ssl_server_keystore_location",
+              "ssl_server_keystore_password",
+              "ssl_server_keystore_keypassword",
+
+              "ssl_client_truststore_location",
+              "ssl_client_truststore_password",
+
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
@@ -502,7 +518,6 @@
                 "key": "nifi.sensitive.props.provider",
                 "value": "BC"
               }
-
 	    ]
           },
           {
@@ -1397,7 +1412,19 @@
           "conformRegex": "Open|CreatorOnly",
           "default": "Open"
         }
-      ]
+      ],
+
+      "sslServer": {
+        "keyIdentifier": "nifi_server",
+        "enabledConfigName": "nifi.security.ssl.enabled",
+        "keystoreLocationConfigName": "nifi.security.keystore",
+        "keystorePasswordConfigName": "nifi.security.keystorePasswd",
+        "keystoreKeyPasswordConfigName": "nifi.security.keyPasswd"
+      },
+      "sslClient": {
+        "truststoreLocationConfigName": "nifi.security.truststore",
+        "truststorePasswordConfigName": "nifi.security.truststorePasswd"
+      }
     }
   ]
 }
