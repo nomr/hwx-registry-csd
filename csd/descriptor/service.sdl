@@ -278,20 +278,33 @@
               "nifi_flow_configuration_archive_max_count",
               "nifi_flowcontroller_auto_resume_state",
               "nifi_ui_banner_text",
+
               "nifi_database_directory",
               "nifi_database_h2_url",
+
               "nifi_flowfile_repository_implementation",
               "nifi_flowfile_repository_directory",
               "nifi_flowfile_repository_partitions",
               "nifi_flowfile_repository_always_sync",
+
               "nifi_swap_queue_threshold",
               "nifi_swap_in_threads",
               "nifi_swap_out_threads",
+
+              "nifi_content_repository_implementation",
+              "nifi_content_claim_max_flow_files",
+              "nifi_content_repository_directory_default",
+              "nifi_content_repository_archive_enabled",
+              "nifi_content_repository_always_sync",
+              "nifi_content_viewer_url",
+
               "nifi_components_status_repository_buffer_size",
+
               "nifi_remote_input_host",
               "nifi_remote_input_secure",
               "nifi_remote_input_socket_port",
               "nifi_remote_input_http_enabled",
+
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
@@ -356,6 +369,7 @@
                 "key": "nifi.documentation.working.directory",
                 "value": "${nifi_home}/work/docs/components"
               },
+
               {
                 "key": "nifi.state.management.configuration.file",
                 "value": "./state-management.xml"
@@ -372,10 +386,12 @@
                 "key": "nifi.state.management.embedded.zookeeper.start",
                 "value": "false"
               },
+
               {
                 "key": "nifi.flowfile.repository.checkpoint.interval",
                 "value": "${nifi_flowfile_repository_checkpoint_interval} mins"
               },
+
               {
                 "key": "nifi.swap.manager.implementation",
                 "value": "org.apache.nifi.controller.FileSystemSwapManager"
@@ -388,6 +404,19 @@
                 "key": "nifi.swap.out.period",
                 "value": "${nifi_swap_out_period} sec"
               },
+
+              {
+                "key": "nifi.content.claim.max.appendable.size",
+                "value": "${nifi_content_claim_max_appendable_size} MB"
+              },
+              {
+                "key": "nifi.content.repository.archive.max.retention.period",
+                "value": "${nifi_content_repository_archive_max_retention_period} hours"
+              },
+              {
+                "key": "nifi.content.repository.archive.max.usage.percentage",
+                "value": "${nifi_content_repository_archive_max_usage_percentage}%"
+              },
               {
                 "key": "nifi.components.status.repository.implementation",
                 "value": "org.apache.nifi.controller.status.history.VolatileComponentStatusRepository"
@@ -396,6 +425,7 @@
                 "key": "nifi.components.status.snapshot.frequency",
                 "value": "${nifi_components_status_snapshot_frequency} min"
               },
+
               {
                 "key": "nifi.remote.input.http.transaction.ttl",
                 "value": "${nifi_remote_input_http_transaction_ttl} sec"
@@ -791,6 +821,96 @@
           "type": "long",
           "min": 1,
           "default": 4
+         },
+         {
+           "name": "nifi_content_repository_implementation",
+           "label": "Content Repository Implementation",
+           "description": "The Content Repository implementation. The default value should only be changed with caution. To store flowfile content in memory instead of on disk (at the risk of data loss in the event of power/machine failure), set this property to org.apache.nifi.controller.repository.VolatileContentRepository.",
+           "configName": "nifi.content.repository.implementation",
+           "required": true,
+           "type": "string",
+           "default": "org.apache.nifi.controller.repository.FileSystemRepository"
+         },
+         {
+           "name": "nifi_content_claim_max_appendable_size",
+           "label": "Content Repository Maximum content claim size",
+           "description": "The maximum size for a content claim.",
+           "required": true,
+           "type": "long",
+           "units": "megabytes",
+           "min": 1,
+           "default": 10
+         },
+         {
+           "name": "nifi_content_claim_max_flow_files",
+           "label": "Content Repository Maximum FlowFiles per Content Claim",
+           "description": "The maximum number of FlowFiles to assign to one content claim.",
+           "configName": "nifi.content.claim.max.flow.files",
+           "required": true,
+           "type": "long",
+           "min": 1,
+           "default": 100
+         },
+         {
+           "name": "nifi_content_repository_directory_default",
+           "label": "Content Repository Default Directory",
+           "description": "The location of the Content Repository. NOTE: Multiple content repositories can be specified by using the nifi.content.repository.directory. prefix with unique suffixes and separate paths as values in safety-valve. For example, to provide two additional locations to act as part of the content repository, a user could also specify additional properties with keys of: nifi.content.repository.directory.content1=/repos/content1 nifi.content.repository.directory.content2=/repos/content2 Providing three total locations, including nifi.content.repository.directory.default.",
+           "configName": "nifi.content.repository.directory.default",
+           "required": true,
+           "type": "path",
+           "conformRegex": "/.*",
+           "pathType": "localDataDir",
+           "mode": "0750",
+           "default": "/data/nifi/content"
+         },
+         {
+           "name": "nifi_content_repository_archive_max_retention_period",
+           "label": "Content Repository Archive Max Retention Period",
+           "description": "If archiving is enabled, then this property specifies the maximum amount of time to keep the archived data.",
+           "configName": "nifi.content.repository.archive.max.retention.period",
+           "required": true,
+           "type": "long",
+           "units": "hours",
+           "min": 1,
+           "default": 12
+         },
+         {
+           "name": "nifi_content_repository_archive_max_usage_percentage",
+           "label": "Content Repository Archive Max Usage Percentage",
+           "description": "If archiving is enabled (see nifi.content.repository.archive.enabled below), then this property must have a value that indicates the content repository disk usage percentage at which archived data begins to be removed. If the archive is empty and content repository disk usage is above this percentage, then archiving is temporarily disabled. Archiving will resume when disk usage is below this percentage.",
+           "configName": "nifi.content.repository.archive.max.usage.percentage",
+           "required": true,
+           "type": "long",
+           "min": 1,
+           "max": 99,
+           "default": 50
+         },
+         {
+           "name": "nifi_content_repository_archive_enabled",
+           "label": "Content Repository Archive Enabled",
+           "description": "To enable content archiving, set this to true and specify a value for the nifi.content.repository.archive.max.usage.percentage property above. Content archiving enables the provenance UI to view or replay content that is no longer in a dataflow queue.",
+           "configName": "nifi.content.repository.archive.enabled",
+           "required": true,
+           "type": "boolean",
+           "default": true
+         },
+         {
+           "name": "nifi_content_repository_always_sync",
+           "label": "Content Repository Always Sync",
+           "description": "If set to true, any change to the repository will be synchronized to the disk, meaning that NiFi will ask the operating system not to cache the information. This is very expensive and can significantly reduce NiFi performance. However, if it is false, there could be the potential for data loss if either there is a sudden power loss or the operating system crashes.",
+           "configName": "nifi.content.repository.always.sync",
+           "required": true,
+           "type": "boolean",
+           "default": false
+         },
+         {
+           "name": "nifi_content_viewer_url",
+           "label": "Content Repository Viewer URL",
+           "description": "The URL for a web-based content viewer if one is available.",
+           "configName": "nifi.content.viewer.url",
+           "required": true,
+           "type": "string",
+           "default": "/nifi-content-viewer/"
          },
          {
            "name": "nifi_components_status_repository_buffer_size",
