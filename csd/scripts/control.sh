@@ -129,6 +129,8 @@ init() {
     [ -e 'login-identity-providers.xml' ] || create_login_identity_providers_xml
     [ -e 'state-management.xml' ] || create_state_management_xml
     [ -e 'authorizers.xml' ] || create_authorizers_xml
+
+    update_nifi_properties
 }
 
 create_login_identity_providers_xml() {
@@ -230,6 +232,12 @@ create_state_management_xml() {
              --param with "'${in_b}'" \
              ${merge} ${in_a}
     rm -f ${in_a} ${in_b}
+}
+
+update_nifi_properties() {
+    sed -i \
+        -e "s|@@CDH_NIFI_HOME@@|${CDH_NIFI_HOME}|g" \
+        nifi-future.properties
 }
 
 init_bootstrap() {

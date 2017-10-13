@@ -271,12 +271,13 @@
             ]
           },
           {
-            "filename": "nifi-future.conf",
+            "filename": "nifi-future.properties",
             "configFormat": "properties",
             "includedParams": [
               "nifi_flow_configuration_archive_enabled",
               "nifi_flow_configuration_archive_max_count",
               "nifi_flowcontroller_auto_resume_state",
+              "nifi_ui_banner_text",
               "nifi_database_directory",
               "nifi_database_h2_url",
               "nifi_security_user_authorizer",
@@ -322,6 +323,26 @@
               {
                 "key": "nifi.login.identity.provider.configuration.file",
                 "value": "./login-identity-providers.xml"
+              },
+              {
+                "key": "nifi.templates.directory",
+                "value": "${nifi_home}/templates"
+              },
+              {
+                "key": "nifi.ui.autorefresh.interval",
+                "value": "${nifi_ui_autorefresh_interval} sec"
+              },
+              {
+                "key": "nifi.nar.library.directory",
+                "value": "@@CDH_NIFI_HOME@@/lib"
+              },
+              {
+                "key": "nifi.nar.working.directory",
+                "value": "${nifi_home}/work/nar"
+              },
+              {
+                "key": "nifi.documentation.working.directory",
+                "value": "${nifi_home}/work/docs/components"
               },
               {
                 "key": "nifi.state.management.configuration.file",
@@ -498,7 +519,7 @@
         {
           "name": "nifi_flow_configuration_archive_enabled",
           "label": "Flow Configuration Archive (on/off)",
-          "description": "whether to archive the flow configuration file",
+          "description": "Specifies whether NiFi creates a backup copy of the flow automatically when the flow is updated.",
           "configName": "nifi.flow.configuration.archive.enabled",
           "required": true,
           "type": "boolean",
@@ -507,7 +528,7 @@
         {
           "name": "nifi_flow_configuration_archive_max_time",
           "label": "Flow Configuration Archive (Max Time)",
-          "description": "How long to retain archived flow configuration files.",
+          "description": "The lifespan of archived flow.xml files. NiFi will delete expired archive files when it updates flow.xml if this property is specified. Expiration is determined based on current system time and the last modified timestamp of an archived flow.xml.",
           "required": true,
           "type": "long",
           "unit": "hours",
@@ -517,7 +538,7 @@
         {
           "name": "nifi_flow_configuration_archive_max_storage",
           "label": "Flow Configuration Archive (Max Storage)",
-          "description": "How much storage to reserve for archived flow configuration files.",
+          "description": "The total data size allowed for the archived flow.xml files. NiFi will delete the oldest archive files until the total archived file size becomes less than this configuration value, if this property is specified. ",
           "required": true,
           "type": "long",
           "unit": "megabytes",
@@ -527,7 +548,7 @@
         {
           "name": "nifi_flow_configuration_archive_max_count",
           "label": "Flow Configuration Archive (Max Count)",
-          "description": "How long to keep archived flow configuration files.",
+          "description": "The number of archive files allowed. NiFi will delete the oldest archive files so that only N latest archives can be kept, if this property is specified." ,
           "configname": "nifi.flow.configuration.archive.max.time",
           "required": false,
           "type": "long",
@@ -536,7 +557,7 @@
         {
           "name": "nifi_flowcontroller_graceful_shutdown_period",
           "label": "Flow Controller Graceful Shutdown Period",
-          "description": "Flow Controller Graceful Shutdown Period",
+          "description": "Indicates the shutdown period.",
           "required": true,
           "type": "long",
           "unit": "seconds",
@@ -546,7 +567,7 @@
         {
           "name": "nifi_flowcontroller_auto_resume_state",
           "label": "Flow Controller Auto Resume State (on/off)",
-          "description": "Flow Controller Auto Resume State",
+          "description": "Indicates whether -upon restart- the components on the NiFi graph should return to their last state.",
           "configName": "nifi.flowcontroller.autoResumeState",
           "required": true,
           "type": "boolean",
@@ -555,7 +576,7 @@
         {
           "name": "nifi_flowservice_writedelay_interval",
           "label": "Flow Service Write Delay Interval",
-          "description": "Flow Service Write Delay Interval",
+          "description": "When many changes are made to the flow.xml, this property specifies how long to wait before writing out the changes, so as to batch the changes into a single write.",
           "required": true,
           "type": "long",
           "unit": "milliseconds",
@@ -565,7 +586,7 @@
         {
           "name": "nifi_administrative_yield_duration",
           "label": "Administrative Yield Duration",
-          "description": "Administrative Yield Duration",
+          "description": "If a component allows an unexpected exception to escape, it is considered a bug. As a result, the framework will pause (or administratively yield) the component for this amount of time. This is done so that the component does not use up massive amounts of system resources, since it is known to have problems in the existing state.",
           "required": true,
           "type": "long",
           "unit": "seconds",
@@ -575,12 +596,30 @@
         {
           "name": "nifi_bored_yield_duration",
           "label": "Bored Yield Duration",
-          "description": "If a component has no work to do (is \"bored\"), how long should we wait before checking again for work?",
+          "description": "When a component has no work to do (i.e., is \"bored\"), this is the amount of time it will wait before checking to see if it has new data to work on. This way, it does not use up CPU resources by checking for new work too often. When setting this property, be aware that it could add extra latency for components that do not constantly have work to do, as once they go into this \"bored\" state, they will wait this amount of time before checking for more work.",
           "required": true,
           "type": "long",
           "unit": "milliseconds",
           "min": 1,
           "default": 10
+        },
+        {
+          "name": "nifi_ui_banner_text",
+          "label": "UI Banner Text",
+          "description": "This is banner text that may be configured to display at the top of the User Interface.",
+          "configName": "nifi.ui.banner.text",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "nifi_ui_autorefresh_interval",
+          "label": "UI Autorefresh Interval",
+          "description": "The interval at which the User Interface auto-refreshes.",
+          "required": true,
+          "type": "long",
+          "unit": "seconds",
+          "min": 1,
+          "default": 30
         },
         {
           "name": "nifi_database_directory",
