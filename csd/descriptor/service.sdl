@@ -280,6 +280,10 @@
               "nifi_ui_banner_text",
               "nifi_database_directory",
               "nifi_database_h2_url",
+              "nifi_flowfile_repository_implementation",
+              "nifi_flowfile_repository_directory",
+              "nifi_flowfile_repository_partitions",
+              "nifi_flowfile_repository_always_sync",
               "nifi_security_user_authorizer",
               "nifi_security_user_login_identity_provider"
             ],
@@ -359,6 +363,10 @@
               {
                 "key": "nifi.state.management.embedded.zookeeper.start",
                 "value": "false"
+              },
+              {
+                "key": "nifi.flowfile.repository.checkpoint.interval",
+                "value": "${nifi_flowfile_repository_checkpoint_interval} mins"
               }
 	    ]
           },
@@ -659,6 +667,53 @@
           "required": false,
           "type": "string",
           "conformRegex": "kerberos-provider|"
+        },
+        {
+          "name": "nifi_flowfile_repository_implementation",
+          "label": "FlowFile Repository Implementation",
+          "description": "The FlowFile Repository implementation. The default value is org.apache.nifi.controller.repository.WriteAheadFlowFileRepository and should only be changed with caution. To store flowfiles in memory instead of on disk (at the risk of data loss in the event of power/machine failure), set this property to org.apache.nifi.controller.repository.VolatileFlowFileRepository.",
+          "configName": "nifi.flowfile.repository.implementation",
+          "required": true,
+          "type": "string",
+          "default": "org.apache.nifi.controller.repository.WriteAheadFlowFileRepository"
+        },
+        {
+          "name": "nifi_flowfile_repository_directory",
+          "label": "FlowFile Respository Directory",
+          "description": "The location of the FlowFile Repository.",
+          "configName": "nifi.flowfile.repository.directory",
+          "required": true,
+          "type": "path",
+          "conformRegex": "/.*",
+          "pathType": "localDataDir",
+          "mode": "0750",
+          "default": "/data/nifi/flowfile"
+        },
+        {
+          "name": "nifi_flowfile_repository_partitions",
+          "label": "FlowFile Respository Number of Partitions",
+          "description": "The number of partitions",
+          "configName": "nifi.flowfile.repository.partitions",
+          "type": "long",
+          "min": 1,
+          "default": 256
+        },
+        {
+          "name": "nifi_flowfile_repository_checkpoint_interval",
+          "label": "FlowFile Repository Checkpoint Interval",
+          "description": "The FlowFile Repository checkpoint interval.",
+          "type": "long",
+          "unit": "minutes",
+          "min": 1,
+          "default": 2
+        },
+        {
+          "name": "nifi_flowfile_repository_always_sync",
+          "label": "FlowFile Repository Always Sync",
+          "description": "If set to true, any change to the repository will be synchronized to the disk, meaning that NiFi will ask the operating system not to cache the information. This is very expensive and can significantly reduce NiFi performance. However, if it is false, there could be the potential for data loss if either there is a sudden power loss or the operating system crashes.",
+           "configName": "nifi.flowfile.repository.always.sync",
+           "type": "boolean",
+           "default": "false"
         },
         {
           "name": "state_management_local_provider_directory",
