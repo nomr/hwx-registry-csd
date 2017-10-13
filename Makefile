@@ -32,9 +32,11 @@ release: NIFI-$(VERSION).jar
 install: NIFI-0.1.0.jar .cookie
 	cp $< /opt/cloudera/csd
 	chown cloudera-scm:cloudera-scm /opt/cloudera/csd/$<
-	curl -s http://localhost:7180/cmf/csd/refresh -b .cookie  | jq
-	curl -s 'http://localhost:7180/cmf/csd/uninstall?csdName=NIFI-0.1.0&force=true' -b .cookie | jq || true
-	curl -s http://localhost:7180/cmf/csd/install?csdName=NIFI-0.1.0 -b .cookie | jq
+	curl -b .cookie -s http://localhost:7180/cmf/csd/refresh | jq
+	curl -b .cookie -s -X POST http://localhost:7180/api/v17/clusters/zeus/services/nifi/commands/stop | jq || true
+	curl -b .cookie -s 'http://localhost:7180/cmf/csd/uninstall?csdName=NIFI-0.1.0&force=true' | jq || true
+	curl -b .cookie -s http://localhost:7180/cmf/csd/install?csdName=NIFI-0.1.0 | jq
+	curl -b .cookie -s -X POST http://localhost:7180/api/v17/clusters/zeus/services/nifi/commands/start | jq || true
 
 uninstall:
 	curl -s http://localhost:7180/cmf/csd/uninstall?csdName=NIFI-0.1.0 -b .cookie  | jq
