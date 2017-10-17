@@ -23,7 +23,7 @@
   "icon": "images/icon.png",
 
   "parcel": {
-    "repoUrl" : "https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.1.2",
+    "repoUrl" : "https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.2.1",
     "requiredTags": [
       "nifi"
     ]
