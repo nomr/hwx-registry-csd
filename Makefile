@@ -13,7 +13,7 @@ endif
 .DELETE_ON_ERROR:
 .PHONY: release install .cookie NIFI-$(VERSION).jar
 
-all: info install
+all: info clean install
 
 info:
 	@echo '       Git Tag: $(TAG)'
