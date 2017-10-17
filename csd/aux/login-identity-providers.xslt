@@ -5,9 +5,9 @@
     <loginIdentityProviders>
     <xsl:choose>
       <xsl:when test="property[name='cdh.login.identity.providers.type' and value='provider']">
-        <providers>
+        <provider>
           <xsl:apply-templates/>
-        </providers>
+        </provider>
       </xsl:when>
     </xsl:choose>
     </loginIdentityProviders>
