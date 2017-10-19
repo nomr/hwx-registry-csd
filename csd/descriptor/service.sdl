@@ -23,7 +23,7 @@
   "icon": "images/icon.png",
 
   "parcel": {
-    "repoUrl" : "https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.2.1",
+    "repoUrl" : "https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.3.0",
     "requiredTags": [
       "nifi"
     ]
@@ -54,10 +54,24 @@
       "type": "path",
       "pathType": "serviceSpecific"
     },
+
     {
       "name": "nifi_home",
       "label": "NiFi Home directory",
       "description": "NiFi's service instance home directory",
+      "configName": "nifi.home",
+      "required": true,
+      "configurableInWizard": true,
+      "default": "/var/lib/nifi",
+      "type": "path",
+      "pathType": "localDataDir",
+      "mode": "0750"
+    },
+    {
+      "name": "nifi_work_dir",
+      "label": "NiFi Work directory",
+      "description": "NiFi's work directory",
+      "configName": "nifi.work.dir",
       "required": true,
       "configurableInWizard": true,
       "default": "/var/run/nifi",
@@ -69,7 +83,7 @@
 
   "roles": [
     {
-      "name": "NIFI_TLS",
+      "name": "NIFI_TLS_SERVER",
       "label": "NiFi TLS Server",
       "pluralLabel": "NiFi TLS Servers",
       "jvmBased": "true",
@@ -539,11 +553,11 @@
               },
               {
                 "key": "nifi.nar.working.directory",
-                "value": "${nifi_home}/work/nar"
+                "value": "${nifi_work_dir}/nar"
               },
               {
                 "key": "nifi.documentation.working.directory",
-                "value": "${nifi_home}/work/docs/components"
+                "value": "${nifi_work_dir}/docs/components"
               },
 
               {
@@ -638,7 +652,7 @@
               },
               { 
                 "key": "nifi.web.jetty.working.directory",
-                "value": "${nifi_home}/work/jetty"
+                "value": "${nifi_work_dir}/jetty"
               },
 
               {
@@ -1480,7 +1494,7 @@
           "conformRegex": "/.*",
           "pathType": "localDataDir",
           "mode": "0750",
-          "default": "/var/run/nifi/state/local"
+          "default": "/data/state/local"
         },
         {
           "name": "state_management_local_provider_always_sync",
