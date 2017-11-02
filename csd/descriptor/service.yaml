@@ -1,0 +1,127 @@
+name: TLS
+label: TLS
+description: TLS Infrastructure service. <span class="error">Requires Java 8.</span>
+version: 0.1.0
+
+compatibility:
+  cdhVersion: 
+    max: '5'
+    min: 5.7.0
+
+icon: images/icon.png
+
+inExpressWizard: false
+
+runAs: 
+  group: nifi
+  principal: nifi
+  user: nifi
+
+maxInstances: 1
+
+parcel:
+  repoUrl: https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.3.0
+  requiredTags: [nifi]
+
+serviceDependencies:
+- name: ZOOKEEPER
+  required: 'true'
+
+parameters:
+- name: java_home
+  configName: java.home
+  label: Java 8 Home
+  description: Path to Java 8
+  configurableInWizard: true
+  default: /usr/java/jdk1.8.0_121
+  pathType: serviceSpecific
+  required: true
+  type: path
+- name: tls_token
+  configName: token
+  label: TLS Server Client-Server Token
+  description: The token to prevent MITM attacks.
+  configurableInWizard: true
+  required: true
+  sensitive: true
+  type: password
+
+roles:
+- name: TLS_SERVER
+  label: Server
+  pluralLabel: Servers
+  jvmBased: 'true'
+  logging: 
+    dir: /var/log/tls
+    filename: server.log
+    loggingType: log4j
+    modifiable: false
+  startRunner:
+    args: [run]
+    environmentVariables: {JAVA_HOME: '${java_home}'}
+    program: scripts/tls-server.sh
+  topology: 
+    maxInstances: '1'
+    minInstances: '1'
+  parameters:
+  - name: tls_dn_prefix
+    configName: dnPrefix
+    label: The DN prefix for the certificate
+    description: The DN prefix to use for the CA certificate.
+    required: true
+    type: string
+    default: CN=
+  - name: tls_dn_suffix
+    configName: dnSuffix
+    label: The DN suffix for the certificate
+    description: The DN suffx to use for the CA certificate.
+    required: true
+    type: string
+    default: ', OU=HADOOP'
+  - name: tls_home
+    label: TLS Server Data Directory
+    description: The path to the TLS Server Directory
+    required: true
+    type: path
+    pathType: localDataDir
+    conformRegex: /.*
+    default: /data/tls
+    mode: '0700'
+  - name: tls_port
+    configName: port
+    label: TLS Server Port
+    description: The port for the Certificate Authority to listen on.
+    required: true
+    type: port
+    min: 1024
+    default: 22443
+  - name: tls_keystore_password
+    configName: keyStorePassword
+    label: TLS Server KeyStore File Password
+    description: The TLS Server keystore password
+    required: true
+    configurableInWizard: true
+    sensitive: true
+    type: password
+  configWriter:
+    generators:
+    - filename: server.hadoop_xml
+      configFormat: hadoop_xml
+      includedParams: 
+      - tls_dn_prefix
+      - tls_dn_suffix
+      - tls_port
+      - tls_token
+      - tls_keystore_password
+      additionalConfigs:
+      - {key: days, value: '1095'}
+      - {key: keySize, value: '2048'}
+      - {key: keyPairAlgorithm, value: RSA}
+      - {key: signingAlgorithm, value: SHA256WITHRSA}
+      - {key: dn, value: '${tls_dn_prefix}${host}${tls_dn_suffix}'}
+      - {key: keyStore, value: '${tls_home}/server.jks'}
+      - {key: keyStoreType, value: jks}
+      - {key: keyPassword, value: '${tls_keystore_password}'}
+      - {key: caHostname, value: '${host}'}
+      - {key: reorderDn, value: true}
+

@@ -52,7 +52,6 @@ csd: csd/descriptor/service.sdl
 $(PKG_NAME)-$(VERSION): csd $(PKG_NAME)-$(VERSION)/images/icon.png validator.jar
 	rsync --exclude '*.swp' -a  $</ $@/
 	cat $</descriptor/service.sdl | jq ".version=\"$(subst $(PKG_NAME)-,,$@)\"" > $@/descriptor/service.sdl
-	java -jar validator.jar -s $@/descriptor/service.sdl || (rm -rf $@ && false)
 
 $(PKG_NAME)-$(VERSION).jar: $(PKG_NAME)-$(VERSION)
 	jar cvf $@ -C $< .
@@ -83,3 +82,4 @@ nifi-$(PKG_VERSION)-bin.tar.gz: nifi-$(PKG_VERSION)-bin.tar.gz-SHA256
 
 %.sdl: %.yaml
 	python yaml2json.py $< $@
+	java -jar validator.jar -s $@
