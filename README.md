@@ -1,2 +1,2 @@
-# nifi-csd
-Cloudera Service Descriptor for Apache NiFi
+# tls-csd
+Cloudera Service Descriptor for TLS Infrastructure

@@ -5,7 +5,7 @@ csd/images/icon.png
 
 # Release and intermediates
 release
-NIFI-*
+TLS-*
 # Remote binaries
 nifi-*.tar.gz
 
