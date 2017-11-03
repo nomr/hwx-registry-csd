@@ -2,18 +2,18 @@
 
 set -efu -o pipefail
 
-. ${COMMON_SCRIPT}
-
-
 hadoop_xml_to_json()
 {
-  xsltproc aux/hadoop2element-value.xslt server.hadoop_xml > server.xml
-  xsltproc aux/xml2json.xslt server.xml | jq '
+  xsltproc ../aux/hadoop2element-value.xslt client.hadoop_xml > client.xml 
+  rm -f client.hadoop_xml
+
+  xsltproc ../aux/xml2json.xslt client.xml | jq '
     .configuration |
     .port=(.port| tonumber) |
     .days=(.days | tonumber) |
     .keySize=(.keySize | tonumber) |
-    .reorderDn=(.reorderDn == "true")' > server.json
+    .reorderDn=(.reorderDn == "true")' > client.json
+  rm -f client.xml
 }
 
 locate_java8_home() {
@@ -35,40 +35,26 @@ locate_java8_home() {
     fi
 }
 
-init() {
-    # NiFi 1.4.0 was compiled with 1.8.0
-    locate_java8_home $1
+deploy() {
+    # Parse master.properties
+    caHostname=`grep port server.properties | head -1 | cut -f 1 -d ':'`
+    caPort=`grep port server.properties | head -1 | cut -f 2 -d '='`
+    rm -f server.properties 
 
-    # Simulate NIFI_TOOLKIT_HOME
-    NIFI_TOOLKIT_HOME=$(pwd)
-    [ -e lib ] || ln -s ${CDH_NIFI_TOOLKIT_HOME}/lib .
+    # Fix hadoop_xml file
+    sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" client.hadoop_xml
+    sed -i "s/@@CA_PORT@@/${caPort}/" client.hadoop_xml
+    sed -i "s/@@HOSTNAME@@/$(hostname)/" client.hadoop_xml
 
+    # Convert to json
     hadoop_xml_to_json
 }
 
-run() {
-    LIBS="${NIFI_TOOLKIT_HOME}/lib/*"
-
-    CLASSPATH=".:${LIBS}"
-
-    export JAVA_HOME="$JAVA_HOME"
-    export NIFI_TOOLKIT_HOME="$NIFI_TOOLKIT_HOME"
-
-    umask 0077
-    exec "${JAVA}" -cp "${CLASSPATH}" ${JAVA_OPTS:--Xms12m -Xmx24m} ${CSD_JAVA_OPTS} org.apache.nifi.toolkit.tls.TlsToolkitMain server --configJsonIn server.json -F
-}
-
-
-main() {
-    init "$1"
-    run "$@"
-}
-
 case "$1" in
-    run)
-        main "$@"
+    deploy)
+        deploy $@
         ;;
     *)
-        echo "Usage nifi {stop|run|status|dump|env}"
+        echo "Usage cc {deploy}"
         ;;
 esac

@@ -1,6 +1,6 @@
 name: TLS
-label: TLS
-description: TLS Infrastructure service. <span class="error">Requires Java 8.</span>
+label: NiFi-TLS
+description: Apache NiFi's public key infrastructure service. <span class="error">Requires Java 8.</span>
 version: 0.1.0
 
 compatibility:
@@ -32,20 +32,45 @@ parameters:
   configName: java.home
   label: Java 8 Home
   description: Path to Java 8
-  configurableInWizard: true
-  default: /usr/java/jdk1.8.0_121
-  pathType: serviceSpecific
   required: true
+  configurableInWizard: true
   type: path
+  pathType: serviceSpecific
+  default: /usr/java/jdk1.8.0_121
 - name: tls_token
   configName: token
   label: TLS Server Client-Server Token
   description: The token to prevent MITM attacks.
-  configurableInWizard: true
   required: true
+  configurableInWizard: true
   sensitive: true
   type: password
-
+  default: jeuKGCg9Wef6QKKxVy62
+- name: tls_dn_prefix
+  configName: dnPrefix
+  label: The DN prefix for the certificate
+  description: The DN prefix to use for the CA certificate.
+  required: true
+  type: string
+  default: CN=
+- name: tls_dn_suffix
+  configName: dnSuffix
+  label: The DN suffix for the certificate
+  description: The DN suffx to use for the CA certificate.
+  required: true
+  type: string
+  default: ', OU=HADOOP'
+- name: tls_home
+  label: TLS Server Data Directory
+  description: The path to the TLS Server Directory
+  required: true
+  configurableInWizard: true
+  type: path
+  pathType: localDataDir
+  conformRegex: /.*
+  default: /data/tls
+  mode: '0700'
+ 
 roles:
 - name: TLS_SERVER
   label: Server
@@ -59,34 +84,11 @@ roles:
   startRunner:
     args: [run]
     environmentVariables: {JAVA_HOME: '${java_home}'}
-    program: scripts/tls-server.sh
+    program: scripts/control.sh
   topology: 
     maxInstances: '1'
     minInstances: '1'
   parameters:
-  - name: tls_dn_prefix
-    configName: dnPrefix
-    label: The DN prefix for the certificate
-    description: The DN prefix to use for the CA certificate.
-    required: true
-    type: string
-    default: CN=
-  - name: tls_dn_suffix
-    configName: dnSuffix
-    label: The DN suffix for the certificate
-    description: The DN suffx to use for the CA certificate.
-    required: true
-    type: string
-    default: ', OU=HADOOP'
-  - name: tls_home
-    label: TLS Server Data Directory
-    description: The path to the TLS Server Directory
-    required: true
-    type: path
-    pathType: localDataDir
-    conformRegex: /.*
-    default: /data/tls
-    mode: '0700'
   - name: tls_port
     configName: port
     label: TLS Server Port
@@ -103,6 +105,7 @@ roles:
     configurableInWizard: true
     sensitive: true
     type: password
+    default: F0UjXLEgeQiNa3JP5E2h
   configWriter:
     generators:
     - filename: server.hadoop_xml
@@ -124,4 +127,55 @@ roles:
       - {key: keyPassword, value: '${tls_keystore_password}'}
       - {key: caHostname, value: '${host}'}
       - {key: reorderDn, value: true}
-
+gateway:
+  alternatives:
+    name: tls-conf
+    priority: 50
+    linkRoot: /etc/nifi-tls
+  scriptRunner:
+    program: scripts/cc.sh
+    args: [deploy]
+  parameters:
+  - name: tls_client_keystore_password
+    configName: keyStorePassword
+    label: Client KeyStore File Password
+    description: The TLS Client keystore password
+    required: true
+    configurableInWizard: true
+    sensitive: true
+    type: password
+    default: xBZHYvPvcoViMrtz6gXI
+  - name: tls_client_truststore_password
+    configName: trustStorePassword
+    label: Client TrustStore File Password
+    description: The TLS Client truststore password
+    required: true
+    configurableInWizard: true
+    sensitive: true
+    type: password
+    default: 0neTmBCe5nMmVGhjlpzI
+  configWriter:
+    generators:
+    - filename: tls-conf/client.hadoop_xml
+      configFormat: hadoop_xml
+      includedParams:
+      - tls_dn_prefix
+      - tls_dn_suffix
+      - tls_token
+      additionalConfigs:
+      - {key: days, value: '1095'}
+      - {key: keySize, value: '2048'}
+      - {key: keyPairAlgorithm, value: RSA}
+      - {key: signingAlgorithm, value: SHA256WITHRSA}
+      - {key: dn, value: '${tls_dn_prefix}@@HOSTNAME@@${tls_dn_suffix}'}
+      - {key: keyStoreType, value: jks}
+      - {key: keyStorePassword, value: '${tls_client_keystore_password}'}
+      - {key: keyPassword, value: '${tls_client_keystore_password}'}
+      - {key: trustStorePassword, value: '${tls_client_truststore_password}'}
+      - {key: caHostname, value: '@@CA_HOSTNAME@@'}
+      - {key: port, value: '@@CA_PORT@@'}
+      - {key: reorderDn, value: true}
+    peerConfigGenerators:
+    - roleName: TLS_SERVER
+      filename: tls-conf/server.properties
+      params: [tls_port]
