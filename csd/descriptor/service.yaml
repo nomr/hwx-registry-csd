@@ -24,8 +24,6 @@ parcel:
   requiredTags: [nifi]
 
 serviceDependencies:
-- name: ZOOKEEPER
-  required: 'true'
 
 parameters:
 - name: java_home
