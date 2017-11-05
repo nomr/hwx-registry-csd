@@ -4,16 +4,17 @@ set -efu -o pipefail
 
 hadoop_xml_to_json()
 {
-  xsltproc ../aux/hadoop2element-value.xslt client.hadoop_xml > client.xml 
-  rm -f client.hadoop_xml
+  local file=server
+  xsltproc ../aux/hadoop2element-value.xslt ${file}.hadoop_xml > ${file}.xml
+  rm -f ${file}.hadoop_xml
 
-  xsltproc ../aux/xml2json.xslt client.xml | jq '
+  xsltproc ../aux/xml2json.xslt ${file}.xml | jq '
     .configuration |
     .port=(.port| tonumber) |
     .days=(.days | tonumber) |
     .keySize=(.keySize | tonumber) |
-    .reorderDn=(.reorderDn == "true")' > client.json
-  rm -f client.xml
+    .reorderDn=(.reorderDn == "true")' > ${file}.json
+  rm -f ${file}.xml
 }
 
 locate_java8_home() {
@@ -42,9 +43,9 @@ deploy() {
     rm -f server.properties 
 
     # Fix hadoop_xml file
-    sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" client.hadoop_xml
-    sed -i "s/@@CA_PORT@@/${caPort}/" client.hadoop_xml
-    sed -i "s/@@HOSTNAME@@/$(hostname)/" client.hadoop_xml
+    sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" server.hadoop_xml
+    sed -i "s/@@CA_PORT@@/${caPort}/" server.hadoop_xml
+    sed -i "s/@@HOSTNAME@@/$(hostname)/" server.hadoop_xml
 
     # Convert to json
     hadoop_xml_to_json

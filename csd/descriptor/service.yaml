@@ -133,28 +133,9 @@ gateway:
   scriptRunner:
     program: scripts/cc.sh
     args: [deploy]
-  parameters:
-  - name: tls_client_keystore_password
-    configName: keyStorePassword
-    label: Client KeyStore File Password
-    description: The TLS Client keystore password
-    required: true
-    configurableInWizard: true
-    sensitive: true
-    type: password
-    default: xBZHYvPvcoViMrtz6gXI
-  - name: tls_client_truststore_password
-    configName: trustStorePassword
-    label: Client TrustStore File Password
-    description: The TLS Client truststore password
-    required: true
-    configurableInWizard: true
-    sensitive: true
-    type: password
-    default: 0neTmBCe5nMmVGhjlpzI
   configWriter:
     generators:
-    - filename: tls-conf/client.hadoop_xml
+    - filename: tls-conf/server.hadoop_xml
       configFormat: hadoop_xml
       includedParams:
       - tls_dn_prefix
@@ -167,9 +148,6 @@ gateway:
       - {key: signingAlgorithm, value: SHA256WITHRSA}
       - {key: dn, value: '${tls_dn_prefix}@@HOSTNAME@@${tls_dn_suffix}'}
       - {key: keyStoreType, value: jks}
-      - {key: keyStorePassword, value: '${tls_client_keystore_password}'}
-      - {key: keyPassword, value: '${tls_client_keystore_password}'}
-      - {key: trustStorePassword, value: '${tls_client_truststore_password}'}
       - {key: caHostname, value: '@@CA_HOSTNAME@@'}
       - {key: port, value: '@@CA_PORT@@'}
       - {key: reorderDn, value: true}
