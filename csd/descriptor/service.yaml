@@ -135,7 +135,7 @@ gateway:
     args: [deploy]
   configWriter:
     generators:
-    - filename: tls-conf/server.hadoop_xml
+    - filename: tls-conf/tls-service.hadoop_xml
       configFormat: hadoop_xml
       includedParams:
       - tls_dn_prefix
@@ -153,5 +153,5 @@ gateway:
       - {key: reorderDn, value: true}
     peerConfigGenerators:
     - roleName: TLS_SERVER
-      filename: tls-conf/server.properties
+      filename: tls-conf/tls-server.properties
       params: [tls_port]

@@ -4,7 +4,7 @@ set -efu -o pipefail
 
 hadoop_xml_to_json()
 {
-  local file=server
+  local file=tls-service
   xsltproc ../aux/hadoop2element-value.xslt ${file}.hadoop_xml > ${file}.xml
   rm -f ${file}.hadoop_xml
 
@@ -38,14 +38,14 @@ locate_java8_home() {
 
 deploy() {
     # Parse master.properties
-    caHostname=`grep port server.properties | head -1 | cut -f 1 -d ':'`
-    caPort=`grep port server.properties | head -1 | cut -f 2 -d '='`
-    rm -f server.properties 
+    caHostname=`grep port tls-server.properties | head -1 | cut -f 1 -d ':'`
+    caPort=`grep port tls-server.properties | head -1 | cut -f 2 -d '='`
+    rm -f tls-server.properties
 
     # Fix hadoop_xml file
-    sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" server.hadoop_xml
-    sed -i "s/@@CA_PORT@@/${caPort}/" server.hadoop_xml
-    sed -i "s/@@HOSTNAME@@/$(hostname)/" server.hadoop_xml
+    sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" tls-service.hadoop_xml
+    sed -i "s/@@CA_PORT@@/${caPort}/" tls-service.hadoop_xml
+    sed -i "s/@@HOSTNAME@@/$(hostname -f)/" tls-service.hadoop_xml
 
     # Convert to json
     hadoop_xml_to_json
