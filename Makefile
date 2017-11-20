@@ -82,6 +82,6 @@ nifi-$(PKG_VERSION)-bin.tar.gz: nifi-$(PKG_VERSION)-bin.tar.gz-SHA256
 %-SHA256: SHA256SUMS
 	grep $(subst -SHA256,,$@) SHA256SUMS > $@
 
-%.sdl: %.yaml
+%.sdl: %.yaml validator.jar
 	python yaml2json.py $< $@
 	java -jar validator.jar -s $@
