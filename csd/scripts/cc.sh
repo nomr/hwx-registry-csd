@@ -17,30 +17,11 @@ hadoop_xml_to_json()
   rm -f ${file}.xml
 }
 
-locate_java8_home() {
-    if [ -z "${JAVA_HOME}" ]; then
-        BIGTOP_JAVA_MAJOR=8
-        locate_java_home
-    fi
-
-    JAVA="${JAVA_HOME}/bin/java"
-    TOOLS_JAR=""
-
-    # if command is env, attempt to add more to the classpath
-    if [ "$1" = "env" ]; then
-        [ "x${TOOLS_JAR}" =  "x" ] && [ -n "${JAVA_HOME}" ] && TOOLS_JAR=$(find -H "${JAVA_HOME}" -name "tools.jar")
-        [ "x${TOOLS_JAR}" =  "x" ] && [ -n "${JAVA_HOME}" ] && TOOLS_JAR=$(find -H "${JAVA_HOME}" -name "classes.jar")
-        if [ "x${TOOLS_JAR}" =  "x" ]; then
-             warn "Could not locate tools.jar or classes.jar. Please set manually to avail all command features."
-        fi
-    fi
-}
-
 deploy() {
     # Parse master.properties
-    caHostname=`grep port tls-server.properties | head -1 | cut -f 1 -d ':'`
-    caPort=`grep port tls-server.properties | head -1 | cut -f 2 -d '='`
-    rm -f tls-server.properties
+    caHostname=`grep port ca-server.properties | head -1 | cut -f 1 -d ':'`
+    caPort=`grep port ca-server.properties | head -1 | cut -f 2 -d '='`
+    rm -f ca-server.properties
 
     # Fix hadoop_xml file
     sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" tls-service.hadoop_xml

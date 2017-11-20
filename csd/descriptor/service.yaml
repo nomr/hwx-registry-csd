@@ -1,6 +1,6 @@
-name: TLS
+name: NIFI_TLS
 label: NiFi-TLS
-description: Apache NiFi's public key infrastructure service. <span class="error">Requires Java 8.</span>
+description: Apache NiFi's Transport Layer Security Service. <span class="error">Requires Java 8.</span>
 version: 0.1.0
 
 compatibility:
@@ -13,15 +13,15 @@ icon: images/icon.png
 inExpressWizard: false
 
 runAs: 
-  group: nifi
-  principal: nifi
-  user: nifi
+  user: nifi-ca
+  group: nifi-ca
+  principal: nifi-ca
 
 maxInstances: 1
 
 parcel:
-  repoUrl: https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.3.0
-  requiredTags: [nifi]
+  repoUrl: https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.4.0
+  requiredTags: [nifi-toolkit]
 
 serviceDependencies:
 
@@ -37,7 +37,7 @@ parameters:
   default: /usr/java/jdk1.8.0_121
 - name: tls_token
   configName: token
-  label: TLS Server Client-Server Token
+  label: Client-Server Token
   description: The token to prevent MITM attacks.
   required: true
   configurableInWizard: true
@@ -57,31 +57,32 @@ parameters:
   description: The DN suffx to use for the CA certificate.
   required: true
   type: string
-  default: ', OU=HADOOP'
+  default: ', OU=NIFI'
 - name: tls_home
-  label: TLS Server Data Directory
-  description: The path to the TLS Server Directory
+  label: Data Directory
+  description: The path to the CA Server Directory
   required: true
   configurableInWizard: true
   type: path
   pathType: localDataDir
   conformRegex: /.*
-  default: /data/tls
+  default: /var/lib/nifi-ca
   mode: '0700'
  
 roles:
-- name: TLS_SERVER
-  label: Server
-  pluralLabel: Servers
+- name: NIFI_TLS_CA
+  label: TLS Certificate of Authority
+  pluralLabel: TLS Certificate of Authority  #maxInstances=1
   jvmBased: 'true'
   logging: 
-    dir: /var/log/tls
-    filename: server.log
+    dir: /var/log/nifi-tls
+    filename: ca-server.log
     loggingType: log4j
     modifiable: false
   startRunner:
     args: [run]
-    environmentVariables: {JAVA_HOME: '${java_home}'}
+    environmentVariables:
+      JAVA_HOME: '${java_home}'
     program: scripts/control.sh
   topology: 
     maxInstances: '1'
@@ -89,7 +90,7 @@ roles:
   parameters:
   - name: tls_port
     configName: port
-    label: TLS Server Port
+    label: CA Server Port
     description: The port for the Certificate Authority to listen on.
     required: true
     type: port
@@ -97,8 +98,8 @@ roles:
     default: 22443
   - name: tls_keystore_password
     configName: keyStorePassword
-    label: TLS Server KeyStore File Password
-    description: The TLS Server keystore password
+    label: CA Server KeyStore File Password
+    description: The CA Server keystore password
     required: true
     configurableInWizard: true
     sensitive: true
@@ -125,17 +126,18 @@ roles:
       - {key: keyPassword, value: '${tls_keystore_password}'}
       - {key: caHostname, value: '${host}'}
       - {key: reorderDn, value: true}
+
 gateway:
   alternatives:
-    name: tls-conf
+    name: ca-conf
     priority: 50
-    linkRoot: /etc/nifi-tls
+    linkRoot: /etc/pki/nifi
   scriptRunner:
     program: scripts/cc.sh
     args: [deploy]
   configWriter:
     generators:
-    - filename: tls-conf/tls-service.hadoop_xml
+    - filename: ca-conf/tls-service.hadoop_xml
       configFormat: hadoop_xml
       includedParams:
       - tls_dn_prefix
@@ -152,6 +154,6 @@ gateway:
       - {key: port, value: '@@CA_PORT@@'}
       - {key: reorderDn, value: true}
     peerConfigGenerators:
-    - roleName: TLS_SERVER
-      filename: tls-conf/tls-server.properties
+    - roleName: NIFI_TLS_CA
+      filename: ca-conf/ca-server.properties
       params: [tls_port]

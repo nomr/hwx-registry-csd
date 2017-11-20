@@ -1,9 +1,9 @@
 TAG:=$(shell git describe --tags | sed -e 's/^v//')
 TAG_DIST=$(shell echo $(TAG) | sed -r -e 's/.*-([[:digit:]]+)-g.*/\1/')
 TAG_HASH=$(shell echo $(TAG) | sed -r -e 's/^.*(g[0-9a-f]+|$$)/\1/')
-PKG_NAME=TLS
+PKG_NAME=NIFI-TLS
 PKG_VERSION=$(shell echo $(TAG) | sed -r -e 's/\+nifi.*//')
-CDH_SERVICE=tls
+CDH_SERVICE=nifi-tls
 
 ifeq ($(TRAVIS), true)
   VERSION=$(TAG)
