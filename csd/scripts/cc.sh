@@ -19,8 +19,8 @@ hadoop_xml_to_json()
 
 deploy() {
     # Parse master.properties
-    caHostname=`grep port ca-server.properties | head -1 | cut -f 1 -d ':'`
-    caPort=`grep port ca-server.properties | head -1 | cut -f 2 -d '='`
+    caHostname=`grep port tls-service.properties | head -1 | cut -f 1 -d ':'`
+    caPort=`grep port tls-service.properties | head -1 | cut -f 2 -d '='`
     rm -f ca-server.properties
 
     # Fix hadoop_xml file

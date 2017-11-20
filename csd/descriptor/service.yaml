@@ -156,5 +156,5 @@ gateway:
       - {key: reorderDn, value: true}
     peerConfigGenerators:
     - roleName: NIFI_TLS_CA
-      filename: tls-conf/ca-server.properties
+      filename: tls-conf/tls-service.properties
       params: [tls_port]
