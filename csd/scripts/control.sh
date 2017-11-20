@@ -7,8 +7,8 @@ set -efu -o pipefail
 
 hadoop_xml_to_json()
 {
-  xsltproc aux/hadoop2element-value.xslt server.hadoop_xml > server.xml
-  xsltproc aux/xml2json.xslt server.xml | jq '
+  xsltproc ${CDH_NIFI_XSLT}/hadoop2element-value.xslt server.hadoop_xml > server.xml
+  xsltproc ${CDH_NIFI_XSLT}/xml2json.xslt server.xml | ${CDH_NIFI_JQ} '
     .configuration |
     .port=(.port| tonumber) |
     .days=(.days | tonumber) |

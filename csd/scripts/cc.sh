@@ -5,10 +5,10 @@ set -efu -o pipefail
 hadoop_xml_to_json()
 {
   local file=tls-service
-  xsltproc ../aux/hadoop2element-value.xslt ${file}.hadoop_xml > ${file}.xml
+  xsltproc $CDH_NIFI_XSLT/hadoop2element-value.xslt ${file}.hadoop_xml > ${file}.xml
   rm -f ${file}.hadoop_xml
 
-  xsltproc ../aux/xml2json.xslt ${file}.xml | jq '
+  xsltproc $CDH_NIFI_XSLT/xml2json.xslt ${file}.xml | ${CDH_NIFI_JQ} '
     .configuration |
     .port=(.port| tonumber) |
     .days=(.days | tonumber) |

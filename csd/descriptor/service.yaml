@@ -20,7 +20,7 @@ runAs:
 maxInstances: 1
 
 parcel:
-  repoUrl: https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.4.0
+  repoUrl: https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.6.1
   requiredTags: [nifi-toolkit]
 
 serviceDependencies:
