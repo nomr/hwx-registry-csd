@@ -49,6 +49,7 @@ parameters:
   label: The DN prefix for the certificate
   description: The DN prefix to use for the CA certificate.
   required: true
+  configurableInWizard: true
   type: string
   default: CN=
 - name: tls_dn_suffix
@@ -56,19 +57,10 @@ parameters:
   label: The DN suffix for the certificate
   description: The DN suffx to use for the CA certificate.
   required: true
+  configurableInWizard: true
   type: string
   default: ', OU=NIFI'
-- name: tls_home
-  label: Data Directory
-  description: The path to the CA Server Directory
-  required: true
-  configurableInWizard: true
-  type: path
-  pathType: localDataDir
-  conformRegex: /.*
-  default: /var/lib/nifi-ca
-  mode: '0700'
- 
+
 roles:
 - name: NIFI_TLS_CA
   label: TLS Certificate of Authority
@@ -96,6 +88,15 @@ roles:
     type: port
     min: 1024
     default: 22443
+  - name: tls_keystore_location
+    configName: keyStore
+    label: CA Server KeyStore File Location
+    description: The CA Server keystore location
+    required: true
+    configurableInWizard: true
+    type: path
+    pathType: localDataFile
+    default: /var/lib/nifi-ca/server.jks
   - name: tls_keystore_password
     configName: keyStorePassword
     label: CA Server KeyStore File Password
@@ -114,6 +115,7 @@ roles:
       - tls_dn_suffix
       - tls_port
       - tls_token
+      - tls_keystore_location
       - tls_keystore_password
       additionalConfigs:
       - {key: days, value: '1095'}
@@ -121,7 +123,6 @@ roles:
       - {key: keyPairAlgorithm, value: RSA}
       - {key: signingAlgorithm, value: SHA256WITHRSA}
       - {key: dn, value: '${tls_dn_prefix}${host}${tls_dn_suffix}'}
-      - {key: keyStore, value: '${tls_home}/server.jks'}
       - {key: keyStoreType, value: jks}
       - {key: keyPassword, value: '${tls_keystore_password}'}
       - {key: caHostname, value: '${host}'}
@@ -129,7 +130,7 @@ roles:
 
 gateway:
   alternatives:
-    name: ca-conf
+    name: tls-conf
     priority: 50
     linkRoot: /etc/pki/nifi
   scriptRunner:
@@ -137,7 +138,7 @@ gateway:
     args: [deploy]
   configWriter:
     generators:
-    - filename: ca-conf/tls-service.hadoop_xml
+    - filename: tls-conf/tls-service.hadoop_xml
       configFormat: hadoop_xml
       includedParams:
       - tls_dn_prefix
@@ -155,5 +156,5 @@ gateway:
       - {key: reorderDn, value: true}
     peerConfigGenerators:
     - roleName: NIFI_TLS_CA
-      filename: ca-conf/ca-server.properties
+      filename: tls-conf/ca-server.properties
       params: [tls_port]
