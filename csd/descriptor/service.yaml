@@ -137,6 +137,9 @@ gateway:
     program: scripts/cc.sh
     args: [deploy]
   configWriter:
+    auxConfigGenerators:
+    - filename: tls-conf/client.sh
+      sourceFilename: scripts/client.sh
     generators:
     - filename: tls-conf/tls-service.hadoop_xml
       configFormat: hadoop_xml
