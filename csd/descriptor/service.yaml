@@ -144,15 +144,12 @@ gateway:
     - filename: tls-conf/tls-service.hadoop_xml
       configFormat: hadoop_xml
       includedParams:
-      - tls_dn_prefix
-      - tls_dn_suffix
       - tls_token
       additionalConfigs:
       - {key: days, value: '1095'}
       - {key: keySize, value: '2048'}
       - {key: keyPairAlgorithm, value: RSA}
       - {key: signingAlgorithm, value: SHA256WITHRSA}
-      - {key: dn, value: '${tls_dn_prefix}@@HOSTNAME@@${tls_dn_suffix}'}
       - {key: keyStoreType, value: jks}
       - {key: caHostname, value: '@@CA_HOSTNAME@@'}
       - {key: port, value: '@@CA_PORT@@'}

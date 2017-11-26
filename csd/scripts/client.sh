@@ -10,7 +10,6 @@ tls_client_init() {
 
     convert_prefix_hadoop_xml ${prefix} ${CDH_NIFI_XSLT}/hadoop2element-value.xslt
 
-    sed -i "s/@@HOSTNAME@@/$(hostname -f)/" ${prefix}-service.xml
     sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" ${prefix}-service.xml
     sed -i "s/@@CA_PORT@@/${caPort}/" ${prefix}-service.xml
 
