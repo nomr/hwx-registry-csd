@@ -13,6 +13,9 @@ tls_client_init() {
     sed -i "s/@@CA_HOSTNAME@@/${caHostname}/" ${prefix}-service.xml
     sed -i "s/@@CA_PORT@@/${caPort}/" ${prefix}-service.xml
 
+    sed -i "s/@@DN_PREFIX@@/${DN_PREFIX}/" ${prefix}-client.xml
+    sed -i "s/@@DN_SUFFIX@@/${DN_SUFFIX}/" ${prefix}-client.xml
+
     # Merge TLS configuration
     local merge=${CDH_NIFI_XSLT}/merge.xslt
     local in_a=${prefix}-client.xml
