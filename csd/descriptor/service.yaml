@@ -34,7 +34,7 @@ parameters:
   configurableInWizard: true
   type: path
   pathType: serviceSpecific
-  default: /usr/java/jdk1.8.0_121
+  default: /usr/java/default
 - name: tls_token
   configName: token
   label: Client-Server Token
