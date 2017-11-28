@@ -4,7 +4,7 @@ description: Apache NiFi's Transport Layer Security Service. <span class="error"
 version: 0.1.0
 
 compatibility:
-  cdhVersion: 
+  cdhVersion:
     max: '5'
     min: 5.7.0
 
@@ -12,7 +12,7 @@ icon: images/icon.png
 
 inExpressWizard: false
 
-runAs: 
+runAs:
   user: nifi-ca
   group: nifi-ca
   principal: nifi-ca
@@ -24,6 +24,9 @@ parcel:
   requiredTags: [nifi-toolkit]
 
 serviceDependencies:
+
+rolesWithExternalLinks:
+- NIFI_TLS_CA
 
 parameters:
 - name: java_home
@@ -66,19 +69,28 @@ roles:
   label: TLS Certificate of Authority
   pluralLabel: TLS Certificate of Authority  #maxInstances=1
   jvmBased: 'true'
-  logging: 
-    dir: /var/log/nifi-tls
-    filename: ca-server.log
-    loggingType: log4j
-    modifiable: false
+
+  externalLink:
+    name: webserver_web_ui
+    label: CA Server
+    url: 'https://${host}:${tls_port}'
+
   startRunner:
     args: [run]
     environmentVariables:
       JAVA_HOME: '${java_home}'
     program: scripts/control.sh
-  topology: 
-    maxInstances: '1'
-    minInstances: '1'
+
+  topology:
+    maxInstances: 1
+    minInstances: 1
+
+  logging:
+    dir: /var/log/nifi-tls
+    filename: ca-server.log
+    loggingType: log4j
+    modifiable: false
+
   parameters:
   - name: tls_port
     configName: port
@@ -106,11 +118,12 @@ roles:
     sensitive: true
     type: password
     default: F0UjXLEgeQiNa3JP5E2h
+
   configWriter:
     generators:
     - filename: server.hadoop_xml
       configFormat: hadoop_xml
-      includedParams: 
+      includedParams:
       - tls_dn_prefix
       - tls_dn_suffix
       - tls_port
