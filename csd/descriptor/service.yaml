@@ -28,6 +28,14 @@ serviceDependencies:
 rolesWithExternalLinks:
 - NIFI_TLS_CA
 
+commands:
+- name: server_remove_keystore
+  label: Remove Keystore
+  description: Removes the CA's keystore.
+  roleCommand: node_remove_keystore
+  roleName: NIFI_TLS_CA
+  runMode: all
+
 parameters:
 - name: java_home
   configName: java.home
@@ -80,6 +88,16 @@ roles:
     environmentVariables:
       JAVA_HOME: '${java_home}'
     program: scripts/control.sh
+
+  commands:
+  - name: node_remove_keystore
+    label: Remove Keystore
+    description: Removes the CA's keystore.
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      program: scripts/exec.sh
+      args: ['rm','-f', '${tls_keystore_location}']
 
   topology:
     maxInstances: 1
