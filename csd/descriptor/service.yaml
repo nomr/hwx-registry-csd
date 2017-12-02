@@ -24,6 +24,8 @@ parcel:
   requiredTags: [hwx-registry]
 
 serviceDependencies:
+- name: ZOOKEEPER
+  required: true
 
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
@@ -49,13 +51,13 @@ parameters:
 
 roles:
 - name: HWX_REGISTRY_SERVER
-  label: SchemaRegistry Server
-  pluralLabel: SchemaRegistry Servers
+  label: Server
+  pluralLabel: Servers
   jvmBased: 'true'
 
   externalLink:
     name: webserver_web_ui
-    label: CA Server
+    label: Registry
     url: 'https://${host}:${port}'
 
   startRunner:
@@ -64,7 +66,10 @@ roles:
       BIGTOP_JAVA_MAJOR: 8
       LOG_DIR: '${log_dir}'
       JAVA_HOME: '${java_home}'
+      REGISTRY_HEAP_OPTS: '-Xmx${jvm_heap_size}m -Xms${jvm_heap_size}m'
+      REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
       HWX_REGISTRY_PORT: '${port}'
+      HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
     program: scripts/control.sh
 
   commands:
@@ -88,6 +93,16 @@ roles:
     modifiable: false
 
   parameters:
+  - name: registry_home
+    configName: registry_home
+    label: Schema Registry home
+    description: The home directory for registry
+    required: true
+    type: path
+    pathType: localDataDir
+    mode: "0750"
+    default: /var/lib/hwx-registry
+
   - name: port
     configName: port
     label: Server Port
@@ -95,7 +110,35 @@ roles:
     required: true
     type: port
     min: 1024
-    default: 22443
+    default: 23443
+
+  - name: jvm_heap_size
+    configName: jvm.heap.size
+    label: Java Maximum(and Initial) heap size
+    description: Java's heap size set using -Xmx and -Xms
+    required: true
+    type: memory
+    unit: megabytes
+    scaleFactor: 1.3
+    autoConfigShare: 100
+    softMin: 512
+    default: 512
+
+  - name: jvm_options
+    configName: jvm.options
+    label: Java Performance Options
+    description: Java performance options.
+    required: true
+    type: string_array
+    separator: ' '
+    default:
+    - -server
+    - -XX:+UseParNewGC
+    - -XX:+UseConcMarkSweepGC
+    - -XX:+CMSClassUnloadingEnabled
+    - -XX:+CMSScavengeBeforeRemark
+    - -XX:+DisableExplicitGC
+    - -Djava.awt.headless=true
 
   configWriter:
     auxConfigGenerators:

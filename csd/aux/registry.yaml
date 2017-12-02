@@ -32,7 +32,7 @@ servletFilters:
 #  className: com.hortonworks.registries.ha.zk.ZKLeadershipParticipant
 #  config:
 #    # This url is a list of ZK servers separated by ,
-#    connect.url: "localhost:2181"
+#    connect.url: "${ZK_QUORUM}"
 #    # root node prefix in ZK for this instance
 #    root: "/registry"
 #    session.timeout.ms: 30000
@@ -45,7 +45,7 @@ servletFilters:
 fileStorageConfiguration:
   className: "com.hortonworks.registries.common.util.LocalFileSystemStorage"
   properties:
-    directory: "/tmp/schema-registry/jars"
+    directory: ${HWX_REGISTRY_STORAGE_LOCATION}/jar
 
 # storage provider configuration
 storageProviderConfiguration:
