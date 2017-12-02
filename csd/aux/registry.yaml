@@ -13,7 +13,6 @@ modules:
       # inmemory schema version cache entry expiry interval after access
       schemaCacheExpiryInterval: 3600
 
-
 servletFilters:
 # - className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
 #   params:
@@ -62,7 +61,7 @@ enableCors: false
 server:
   applicationConnectors:
     - type: http
-      port: 9081
+      port: ${HWX_REGISTRY_PORT}
 
 # Logging settings.
 logging:

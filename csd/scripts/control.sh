@@ -6,4 +6,11 @@ set -efu -o pipefail
 
 locate_java_home
 
-exec ${HWX_REGISTRY_HOME}/bin/registry-server-start.sh ${CONF_DIR}/registry.yaml
+shell_format=""
+for i in ${!HWX_REGISTRY_*}; do
+  shell_format="${shell_format},\$$i"
+done
+
+cat ${CONF_DIR}/registry.yaml | envsubst $shell_format > ${CONF_DIR}/registry.yaml.final
+
+exec ${HWX_REGISTRY_HOME}/bin/registry-server-start.sh ${CONF_DIR}/registry.yaml.final

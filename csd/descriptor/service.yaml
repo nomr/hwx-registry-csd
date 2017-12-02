@@ -64,6 +64,7 @@ roles:
       BIGTOP_JAVA_MAJOR: 8
       LOG_DIR: '${log_dir}'
       JAVA_HOME: '${java_home}'
+      HWX_REGISTRY_PORT: '${port}'
     program: scripts/control.sh
 
   commands:
