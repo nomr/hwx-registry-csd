@@ -1,6 +1,6 @@
-name: NIFI_TLS
-label: NiFi-TLS
-description: Apache NiFi's Transport Layer Security Service. <span class="error">Requires Java 8.</span>
+name: HWX_REGISTRY
+label: Schema Registry
+description: HortonWorks Schema Registry. <span class="error">Requires Java 8.</span>
 version: 0.1.0
 
 compatibility:
@@ -13,28 +13,28 @@ icon: images/icon.png
 inExpressWizard: false
 
 runAs:
-  user: nifi-ca
-  group: nifi-ca
-  principal: nifi-ca
+  user: hwx-registry
+  group: hwx-registry
+  principal: hwx-registry
 
 maxInstances: 1
 
 parcel:
-  repoUrl: https://github.com/nomr/nifi-parcel/releases/download/v1.4.0+nifi0.6.1
-  requiredTags: [nifi-toolkit]
+  repoUrl: https://github.com/nomr/hwx-registry-parcel/releases/download/v0.4.0+registry0.0.1
+  requiredTags: [hwx-registry]
 
 serviceDependencies:
 
 rolesWithExternalLinks:
-- NIFI_TLS_CA
+- HWX_REGISTRY_SERVER
 
 commands:
-- name: server_remove_keystore
-  label: Remove Keystore
-  description: Removes the CA's keystore.
-  roleCommand: node_remove_keystore
-  roleName: NIFI_TLS_CA
-  runMode: all
+- name: service_cmd_1
+  label: CMD_1
+  description: CMD_1
+  roleCommand: server_cmd_1
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
 
 parameters:
 - name: java_home
@@ -46,53 +46,30 @@ parameters:
   type: path
   pathType: serviceSpecific
   default: /usr/java/default
-- name: tls_token
-  configName: token
-  label: Client-Server Token
-  description: The token to prevent MITM attacks.
-  required: true
-  configurableInWizard: true
-  sensitive: true
-  type: password
-  default: jeuKGCg9Wef6QKKxVy62
-- name: tls_dn_prefix
-  configName: dnPrefix
-  label: The DN prefix for the certificate
-  description: The DN prefix to use for the CA certificate.
-  required: true
-  configurableInWizard: true
-  type: string
-  default: CN=
-- name: tls_dn_suffix
-  configName: dnSuffix
-  label: The DN suffix for the certificate
-  description: The DN suffx to use for the CA certificate.
-  required: true
-  configurableInWizard: true
-  type: string
-  default: ', OU=NIFI'
 
 roles:
-- name: NIFI_TLS_CA
-  label: TLS Certificate of Authority
-  pluralLabel: TLS Certificate of Authority  #maxInstances=1
+- name: HWX_REGISTRY_SERVER
+  label: SchemaRegistry Server
+  pluralLabel: SchemaRegistry Servers
   jvmBased: 'true'
 
   externalLink:
     name: webserver_web_ui
     label: CA Server
-    url: 'https://${host}:${tls_port}'
+    url: 'https://${host}:${port}'
 
   startRunner:
     args: [run]
     environmentVariables:
+      BIGTOP_JAVA_MAJOR: 8
+      LOG_DIR: '${log_dir}'
       JAVA_HOME: '${java_home}'
     program: scripts/control.sh
 
   commands:
-  - name: node_remove_keystore
-    label: Remove Keystore
-    description: Removes the CA's keystore.
+  - name: server_cmd_1
+    label: CMD_1
+    description: CMD_1
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
@@ -104,88 +81,66 @@ roles:
     minInstances: 1
 
   logging:
-    dir: /var/log/nifi-tls
-    filename: ca-server.log
-    loggingType: log4j
+    dir: /var/log/hwx-registry
+    filename: server.log
+    loggingType: other
     modifiable: false
 
   parameters:
-  - name: tls_port
+  - name: port
     configName: port
-    label: CA Server Port
-    description: The port for the Certificate Authority to listen on.
+    label: Server Port
+    description: The port for the SchemaRegistry to listen on.
     required: true
     type: port
     min: 1024
     default: 22443
-  - name: tls_keystore_location
-    configName: keyStore
-    label: CA Server KeyStore File Location
-    description: The CA Server keystore location
-    required: true
-    configurableInWizard: true
-    type: path
-    pathType: localDataFile
-    default: /var/lib/nifi-ca/server.jks
-  - name: tls_keystore_password
-    configName: keyStorePassword
-    label: CA Server KeyStore File Password
-    description: The CA Server keystore password
-    required: true
-    configurableInWizard: true
-    sensitive: true
-    type: password
-    default: F0UjXLEgeQiNa3JP5E2h
 
   configWriter:
+    auxConfigGenerators:
+    - filename: registry.yaml
+      sourceFilename: aux/registry.yaml
+
     generators:
     - filename: server.hadoop_xml
       configFormat: hadoop_xml
       includedParams:
-      - tls_dn_prefix
-      - tls_dn_suffix
-      - tls_port
-      - tls_token
-      - tls_keystore_location
-      - tls_keystore_password
+      - port
       additionalConfigs:
       - {key: days, value: '1095'}
       - {key: keySize, value: '2048'}
       - {key: keyPairAlgorithm, value: RSA}
       - {key: signingAlgorithm, value: SHA256WITHRSA}
-      - {key: dn, value: '${tls_dn_prefix}${host}${tls_dn_suffix}'}
       - {key: keyStoreType, value: jks}
-      - {key: keyPassword, value: '${tls_keystore_password}'}
       - {key: caHostname, value: '${host}'}
       - {key: reorderDn, value: true}
 
-gateway:
-  alternatives:
-    name: tls-conf
-    priority: 50
-    linkRoot: /etc/pki/nifi
-  scriptRunner:
-    program: scripts/cc.sh
-    args: [deploy]
-  configWriter:
-    auxConfigGenerators:
-    - filename: tls-conf/client.sh
-      sourceFilename: scripts/client.sh
-    generators:
-    - filename: tls-conf/tls-service.hadoop_xml
-      configFormat: hadoop_xml
-      includedParams:
-      - tls_token
-      additionalConfigs:
-      - {key: days, value: '1095'}
-      - {key: keySize, value: '2048'}
-      - {key: keyPairAlgorithm, value: RSA}
-      - {key: signingAlgorithm, value: SHA256WITHRSA}
-      - {key: keyStoreType, value: jks}
-      - {key: caHostname, value: '@@CA_HOSTNAME@@'}
-      - {key: port, value: '@@CA_PORT@@'}
-      - {key: reorderDn, value: true}
-    peerConfigGenerators:
-    - roleName: NIFI_TLS_CA
-      filename: tls-conf/tls-service.properties
-      params: [tls_port]
+#gateway:
+#  alternatives:
+#    name: tls-conf
+#    priority: 50
+#    linkRoot: /etc/hwx-registry
+#  scriptRunner:
+#    program: scripts/cc.sh
+#    args: [deploy]
+#  configWriter:
+#    auxConfigGenerators:
+#    - filename: tls-conf/client.sh
+#      sourceFilename: scripts/client.sh
+#    generators:
+#    - filename: tls-conf/tls-service.hadoop_xml
+#      configFormat: hadoop_xml
+#      includedParams: [ ]
+#      additionalConfigs:
+#      - {key: days, value: '1095'}
+#      - {key: keySize, value: '2048'}
+#      - {key: keyPairAlgorithm, value: RSA}
+#      - {key: signingAlgorithm, value: SHA256WITHRSA}
+#      - {key: keyStoreType, value: jks}
+#      - {key: caHostname, value: '@@CA_HOSTNAME@@'}
+#      - {key: port, value: '@@CA_PORT@@'}
+#      - {key: reorderDn, value: true}
+#    peerConfigGenerators:
+#    - roleName: HWX_REGISTRY_SERVER
+#      filename: tls-conf/tls-service.properties
+#      params: [tls_port]

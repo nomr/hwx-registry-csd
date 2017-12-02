@@ -1,9 +1,9 @@
 TAG:=$(shell git describe --tags | sed -e 's/^v//')
 TAG_DIST=$(shell echo $(TAG) | sed -r -e 's/.*-([[:digit:]]+)-g.*/\1/')
 TAG_HASH=$(shell echo $(TAG) | sed -r -e 's/^.*(g[0-9a-f]+|$$)/\1/')
-PKG_NAME=NIFI-TLS
-PKG_VERSION=$(shell echo $(TAG) | sed -r -e 's/\+nifi.*//')
-CDH_SERVICE=nifi_tls
+PKG_NAME=HWX-REGISTRY
+PKG_VERSION=$(shell echo $(TAG) | sed -r -e 's/\+registry.*//')
+CDH_SERVICE=hwx_registry
 
 ifeq ($(TRAVIS), true)
   VERSION=$(TAG)
@@ -22,7 +22,7 @@ info:
 	@[ ! -z $(TAG) ]
 	@echo '      Tag dist: $(TAG_DIST)'
 	@echo '      Tag hash: $(TAG_HASH)'
-	@echo '  NiFi version: $(PKG_VERSION)'
+	@echo '   PKG version: $(PKG_VERSION)'
 	@echo '   CSD version: $(VERSION)'
 
 clean:
@@ -51,7 +51,7 @@ uninstall:
 
 csd: csd/descriptor/service.sdl
 
-$(PKG_NAME)-$(VERSION): csd $(PKG_NAME)-$(VERSION)/images/icon.png validator.jar
+$(PKG_NAME)-$(VERSION): csd validator.jar
 	rsync --exclude '*.swp' -a  $</ $@/
 	rm $@/descriptor/service.yaml
 	cat $</descriptor/service.sdl | jq ".version=\"$(subst $(PKG_NAME)-,,$@)\"" > $@/descriptor/service.sdl
@@ -59,24 +59,11 @@ $(PKG_NAME)-$(VERSION): csd $(PKG_NAME)-$(VERSION)/images/icon.png validator.jar
 $(PKG_NAME)-$(VERSION).jar: $(PKG_NAME)-$(VERSION)
 	jar cvf $@ -C $< .
 
-$(PKG_NAME)-$(VERSION)/images/icon.png:
-	@mkdir -p $(shell dirname $@)
-	@rm -f tls-https.png
-	wget https://www.webwatchdog.io/wp-content/uploads/2016/12/tls-https.png
-	convert -resize 16x16 tls-https.png $@
-
-
-
 
 # Remote dependencies
 validator.jar:
 	cd tools/cm_ext && mvn -q install && cd -
 	ln tools/cm_ext/validator/target/validator.jar .
-
-nifi-$(PKG_VERSION)-bin.tar.gz: nifi-$(PKG_VERSION)-bin.tar.gz-SHA256
-	wget 'https://www.apache.org/dyn/mirrors/mirrors.cgi?action=download&filename=nifi/$(PKG_VERSION)/$@' -O $@
-	touch $@
-	sha256sum -c $<
 
 
 # Implicit rules
