@@ -70,6 +70,7 @@ roles:
       REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
+      HWX_REGISTRY_ZK_ROOT: '${zk_root}'
     program: scripts/control.sh
 
   commands:
@@ -112,6 +113,16 @@ roles:
     min: 1024
     default: 23443
 
+  - name: zk_root
+    configName: zk_root
+    label: Zookeeper ZNode root
+    description: Zookeeper ZNode root
+    required: true
+    type: path
+    pathType: serviceSpecific
+    conformRegex: /.*
+    default: /hwx-registry
+
   - name: jvm_heap_size
     configName: jvm.heap.size
     label: Java Maximum(and Initial) heap size
@@ -142,8 +153,8 @@ roles:
 
   configWriter:
     auxConfigGenerators:
-    - filename: registry.yaml
-      sourceFilename: aux/registry.yaml
+    - filename: registry.envsubst.yaml
+      sourceFilename: aux/registry.envsubst.yaml
 
     generators:
     - filename: server.hadoop_xml
