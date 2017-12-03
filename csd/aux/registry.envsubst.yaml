@@ -47,7 +47,20 @@ server:
 
 # Logging settings.
 logging:
-  level: INFO
+  level: ${HWX_REGISTRY_LOG_THRESHOLD}
   loggers:
-    com.hortonworks.registries: INFO
-
+    com.hortonworks.registries: ${HWX_REGISTRY_LOG_THRESHOLD}
+  appenders:
+    - type: console
+      threshold: ${HWX_REGISTRY_LOG_THRESHOLD}
+      logFormat: "${HWX_REGISTRY_LOG_CONSOLE_FORMAT}"
+    - type: file
+      threshold: ${HWX_REGISTRY_LOG_THRESHOLD}
+      currentLogFilename: ${HWX_REGISTRY_LOG_DIR}/${HWX_REGISTRY_LOG_FILE}
+      #If this maxFileSize is set, then dropwizard.io is not creating the logfile
+      #maxFileSize: ${HWX_REGISTRY_LOG_FILE_SIZE}
+      archive: true
+      archivedLogFilenamePattern: ${HWX_REGISTRY_LOG_DIR}/${HWX_REGISTRY_LOG_FILE}.%d
+      archivedFileCount: ${HWX_REGISTRY_LOG_FILE_COUNT}
+      timeZone: UTC
+      logFormat: "${HWX_REGISTRY_LOG_FILE_FORMAT}"
