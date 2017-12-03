@@ -34,7 +34,7 @@ commands:
 - name: service_init
   label: Initialize Database
   description: Initializes the database.
-  roleCommand: server_init
+  roleCommand: server_db_migrate
   roleName: HWX_REGISTRY_SERVER
   runMode: single
 
@@ -80,15 +80,38 @@ roles:
     args: [registry]
 
   commands:
-  - name: server_init
+  - name: server_db_migrate
     label: Initialize Database
-    description: Initializes the Database
+    description: Execute schema migration from last check point,
+      Create the tables if they don't exist
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
       environmentVariables: *environmentVariables
       program: scripts/control.sh
-      args: [bootstrap, migrate]
+      args: [bootstrap, migrate, validate]
+
+  - name: server_db_drop
+    label: Drop Database
+    description: Drop all the tables in the target database
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, drop]
+
+  - name: server_db_repair
+    label: Repair Database
+    description: Repairs the DATABASE_CHANGE_LOG by removing
+      failed migrations and correcting checksum of existing migration
+      script.
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, repair]
 
   topology:
     minInstances: 1

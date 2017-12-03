@@ -76,7 +76,10 @@ bootstrap_main() {
     SCRIPT_ROOT_DIR=${BOOTSTRAP_DIR}/sql
     CLASSPATH="${BOOTSTRAP_DIR}/lib/*"
     TABLE_INITIALIZER_MAIN_CLASS=com.hortonworks.registries.storage.tool.TablesInitializer
-    ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --$1
+
+    for cmd in $@; do
+      ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --$cmd
+    done
 }
 
 program=$1
