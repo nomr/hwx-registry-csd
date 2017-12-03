@@ -33,7 +33,14 @@ rolesWithExternalLinks:
 kerberos: true
 
 commands:
-- name: service_init
+- name: service_zk_init
+  label: Initialize Zookeeper
+  description: Create the Zookeeper ZNode with proper ACLs
+  roleCommand: server_zk_init
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
+- name: service_db_init
   label: Initialize Database
   description: Initializes the database.
   roleCommand: server_db_migrate
@@ -87,11 +94,31 @@ roles:
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
       HWX_REGISTRY_USER: '${user}'
-      HWX_REGISTRY_ZK_ROOT: '${zk_root}'
+      HWX_REGISTRY_ZK_ROOT: '/${user}'
     program: scripts/control.sh
     args: [registry]
 
   commands:
+  - name: server_zk_init
+    label: Initialize Zookeeper
+    description: Create the Zookeeper ZNode with proper ACLs
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [zookeeper, create]
+
+  - name: server_zk_drop
+    label: Drop Zookeeper ZNode
+    description: Drop the application ZNode root
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [zookeeper, drop]
+
   - name: server_db_migrate
     label: Initialize Database
     description: Execute schema migration from last check point,
@@ -153,16 +180,6 @@ roles:
     type: port
     min: 1024
     default: 23443
-
-  - name: zk_root
-    configName: zk_root
-    label: Zookeeper ZNode root
-    description: Zookeeper ZNode root
-    required: true
-    type: path
-    pathType: serviceSpecific
-    conformRegex: /.*
-    default: /hwx-registry
 
   - name: storage_provider
     label: Storage Provider
