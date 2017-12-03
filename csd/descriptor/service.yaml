@@ -31,10 +31,10 @@ rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
 
 commands:
-- name: service_cmd_1
-  label: CMD_1
-  description: CMD_1
-  roleCommand: server_cmd_1
+- name: service_init
+  label: Initialize Database
+  description: Initializes the database.
+  roleCommand: server_init
   roleName: HWX_REGISTRY_SERVER
   runMode: single
 
@@ -58,11 +58,10 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'https://${host}:${port}'
+    url: 'http://${host}:${port}'
 
   startRunner:
-    args: [run]
-    environmentVariables:
+    environmentVariables: &environmentVariables
       BIGTOP_JAVA_MAJOR: 8
       LOG_DIR: '${log_dir}'
       JAVA_HOME: '${java_home}'
@@ -78,19 +77,20 @@ roles:
       HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
     program: scripts/control.sh
+    args: [registry]
 
   commands:
-  - name: server_cmd_1
-    label: CMD_1
-    description: CMD_1
+  - name: server_init
+    label: Initialize Database
+    description: Initializes the Database
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
-      program: scripts/exec.sh
-      args: ['rm','-f', '${tls_keystore_location}']
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, migrate]
 
   topology:
-    maxInstances: 1
     minInstances: 1
 
   logging:
