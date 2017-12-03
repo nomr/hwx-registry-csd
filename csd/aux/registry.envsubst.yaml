@@ -44,6 +44,9 @@ server:
   applicationConnectors:
     - type: http
       port: ${HWX_REGISTRY_PORT}
+  adminConnectors:
+    - type: http
+      port: ${HWX_REGISTRY_ADMIN_PORT}
 
 # Logging settings.
 logging:

@@ -67,6 +67,7 @@ roles:
       JAVA_HOME: '${java_home}'
       REGISTRY_HEAP_OPTS: '-Xmx${jvm_heap_size}m -Xms${jvm_heap_size}m'
       REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
+      HWX_REGISTRY_ADMIN_PORT: '${admin_port}'
       HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_SP: '${storage_provider}'
@@ -142,6 +143,15 @@ roles:
     type: port
     min: 1024
     default: 23443
+
+  - name: admin_port
+    configName: admin.port
+    label: Admin Server Port
+    description: The port for the SchemaRegistry Administrative app to listen on.
+    required: true
+    type: port
+    min: 1024
+    default: 23444
 
   - name: zk_root
     configName: zk_root
