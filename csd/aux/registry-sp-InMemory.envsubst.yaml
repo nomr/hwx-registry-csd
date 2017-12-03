@@ -1,0 +1,3 @@
+# storage provider configuration
+storageProviderConfiguration:
+ providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"

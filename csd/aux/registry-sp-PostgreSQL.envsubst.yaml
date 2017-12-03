@@ -1,0 +1,10 @@
+storageProviderConfiguration:
+ providerClass: "com.hortonworks.registries.storage.impl.jdbc.JdbcStorageManager"
+ properties:
+   db.type: "postgresql"
+   queryTimeoutInSecs: 30
+   db.properties:
+     dataSourceClassName: "org.postgresql.ds.PGSimpleDataSource"
+     dataSource.url: "jdbc:postgresql://${HWX_REGISTRY_SP_DB_HOSTNAME}${HWX_REGISTRY_SP_DB_PORT}/${HWX_REGISTRY_SP_DB_NAME}"
+     dataSource.user: "${HWX_REGISTRY_SP_DB_USER}"
+     dataSource.password: "${HWX_REGISTRY_SP_DB_PASSWORD}"

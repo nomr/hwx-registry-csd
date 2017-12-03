@@ -71,6 +71,12 @@ roles:
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
       HWX_REGISTRY_ZK_ROOT: '${zk_root}'
+      HWX_REGISTRY_SP: '${storage_provider}'
+      HWX_REGISTRY_SP_DB_HOSTNAME: '${storage_provider_db_hostname}'
+      HWX_REGISTRY_SP_DB_PORT: '${storage_provider_db_port}'
+      HWX_REGISTRY_SP_DB_NAME: '${storage_provider_db_name}'
+      HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
+      HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
     program: scripts/control.sh
 
   commands:
@@ -122,6 +128,56 @@ roles:
     pathType: serviceSpecific
     conformRegex: /.*
     default: /hwx-registry
+
+  - name: storage_provider
+    label: Storage Provider
+    description: The type of storage provider
+    required: true
+    type: string_enum
+    validValues: [InMemory, MySQL, PostgreSQL, Oracle]
+    default: InMemory
+
+  - name: storage_provider_db_hostname
+    label: Storage Provider DataSource Host
+    description: The hostname of the datasource
+    required: true
+    configurableInWizard: true
+    type: uri
+    default: localhost
+
+  - name: storage_provider_db_port
+    label: Storage Provider Database Port
+    description: The database port number. The default (0) uses the driver's default port.
+    required: true
+    configurableInWizard: true
+    type: port
+    outbound: true
+    zeroAllowed: true
+    default: 0
+
+  - name: storage_provider_db_name
+    label: Storage Provider Database Name
+    description: The name of the database for schema_registry
+    required: true
+    configurableInWizard: true
+    type: string
+    default: schema_registry
+
+  - name: storage_provider_db_user
+    label: Storage Provider DataSource User
+    description: Username used to login to data source
+    required: true
+    configurableInWizard: true
+    type: string
+    default: hwx-registry
+
+  - name: storage_provider_db_password
+    label: Storage Provider DataSource Password
+    description: Password used for connecting to data source
+    required: true
+    configurableInWizard: true
+    sensitive: true
+    type: password
 
   - name: jvm_heap_size
     configName: jvm.heap.size

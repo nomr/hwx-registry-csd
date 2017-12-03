@@ -47,10 +47,6 @@ fileStorageConfiguration:
   properties:
     directory: ${HWX_REGISTRY_STORAGE_LOCATION}/jar
 
-# storage provider configuration
-storageProviderConfiguration:
- providerClass: "com.hortonworks.registries.storage.impl.memory.InMemoryStorageManager"
-
 #swagger configuration
 swagger:
   resourcePackage: com.hortonworks.registries.schemaregistry.webservice
