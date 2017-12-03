@@ -67,15 +67,16 @@ roles:
       JAVA_HOME: '${java_home}'
       REGISTRY_HEAP_OPTS: '-Xmx${jvm_heap_size}m -Xms${jvm_heap_size}m'
       REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
+      HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
-      HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
-      HWX_REGISTRY_ZK_ROOT: '${zk_root}'
       HWX_REGISTRY_SP: '${storage_provider}'
       HWX_REGISTRY_SP_DB_HOSTNAME: '${storage_provider_db_hostname}'
       HWX_REGISTRY_SP_DB_PORT: '${storage_provider_db_port}'
       HWX_REGISTRY_SP_DB_NAME: '${storage_provider_db_name}'
       HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
+      HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
+      HWX_REGISTRY_ZK_ROOT: '${zk_root}'
     program: scripts/control.sh
     args: [registry]
 
@@ -119,8 +120,8 @@ roles:
   logging:
     dir: /var/log/hwx-registry
     filename: server.log
-    loggingType: other
     modifiable: false
+    loggingType: log4j
 
   parameters:
   - name: registry_home

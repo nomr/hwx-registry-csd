@@ -41,15 +41,32 @@ move_aux_files() {
     fi
 }
 
-edit_variables() {
+get_property() {
+    local file=$1
+    local key=$2
+    local line=$(grep "$key=" ${file}.properties | tail -1)
+    echo "${line/$key=/}"
+}
+
+load_variables() {
     HWX_REGISTRY_SP_DB_PORT=":${HWX_REGISTRY_SP_DB_PORT}"
     if [ "${HWX_REGISTRY_SP_DB_PORT}" == ":0" ]; then
         HWX_REGISTRY_SP_DB_PORT=""
     fi
+
+    # Logging Variables
+    export HWX_REGISTRY_LOG_THRESHOLD=$(get_property log4j log.threshold)
+    export HWX_REGISTRY_LOG_FILE=$(get_property log4j log.file)
+    export HWX_REGISTRY_LOG_FILE_COUNT=$(get_property log4j max.log.file.backup.index)
+    export HWX_REGISTRY_LOG_FILE_SIZE=$(get_property log4j max.log.file.size)
+    export HWX_REGISTRY_LOG_FILE_FORMAT=$(get_property log4j log4j.appender.RFA.layout.ConversionPattern)
+    export HWX_REGISTRY_LOG_CONSOLE_FORMAT=$(get_property log4j log4j.appender.console.layout.ConversionPattern)
+    rm -f log4j.properties
+
 }
 
 create_registry_yaml() {
-    edit_variables
+    load_variables
     move_aux_files
 
     envsubst_all
