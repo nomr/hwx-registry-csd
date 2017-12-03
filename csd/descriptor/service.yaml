@@ -30,6 +30,8 @@ serviceDependencies:
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
 
+kerberos: true
+
 commands:
 - name: service_init
   label: Initialize Database
@@ -60,6 +62,14 @@ roles:
     label: Registry
     url: 'http://${host}:${port}'
 
+  kerberosPrincipals:
+  - name: HWX_REGISTRY_PRINCIPAL
+    primary: ${principal}
+    instance: ${host}
+  - name: HWX_REGISTRY_HTTP_PRINCIPAL
+    primary: HTTP
+    instance: ${host}
+
   startRunner:
     environmentVariables: &environmentVariables
       BIGTOP_JAVA_MAJOR: 8
@@ -76,6 +86,7 @@ roles:
       HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
+      HWX_REGISTRY_USER: '${user}'
       HWX_REGISTRY_ZK_ROOT: '${zk_root}'
     program: scripts/control.sh
     args: [registry]
@@ -233,6 +244,8 @@ roles:
 
   configWriter:
     auxConfigGenerators:
+    - filename: jaas.envsubst.conf
+      sourceFilename: aux/jaas.envsubst.conf
     - filename: registry.envsubst.yaml
       sourceFilename: aux/registry.envsubst.yaml
 

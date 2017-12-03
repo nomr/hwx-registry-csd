@@ -5,7 +5,7 @@ set -efu -o pipefail
 . ${COMMON_SCRIPT}
 
 envsubst_all() {
-    local shell_format="\$ZK_QUORUM"
+    local shell_format="\$CONF_DIR,\$ZK_QUORUM"
     for i in ${!HWX_REGISTRY_*}; do
         shell_format="${shell_format},\$$i"
     done
