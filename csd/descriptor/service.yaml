@@ -25,16 +25,16 @@ parcel:
 
 serviceDependencies:
 - name: ZOOKEEPER
-  required: true
+  required: false
 
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
 
 commands:
-- name: service_cmd_1
-  label: CMD_1
-  description: CMD_1
-  roleCommand: server_cmd_1
+- name: service_init
+  label: Initialize Database
+  description: Initializes the database.
+  roleCommand: server_db_migrate
   roleName: HWX_REGISTRY_SERVER
   runMode: single
 
@@ -58,11 +58,10 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'https://${host}:${port}'
+    url: 'http://${host}:${port}'
 
   startRunner:
-    args: [run]
-    environmentVariables:
+    environmentVariables: &environmentVariables
       BIGTOP_JAVA_MAJOR: 8
       LOG_DIR: '${log_dir}'
       JAVA_HOME: '${java_home}'
@@ -71,20 +70,50 @@ roles:
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
       HWX_REGISTRY_ZK_ROOT: '${zk_root}'
+      HWX_REGISTRY_SP: '${storage_provider}'
+      HWX_REGISTRY_SP_DB_HOSTNAME: '${storage_provider_db_hostname}'
+      HWX_REGISTRY_SP_DB_PORT: '${storage_provider_db_port}'
+      HWX_REGISTRY_SP_DB_NAME: '${storage_provider_db_name}'
+      HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
+      HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
     program: scripts/control.sh
+    args: [registry]
 
   commands:
-  - name: server_cmd_1
-    label: CMD_1
-    description: CMD_1
+  - name: server_db_migrate
+    label: Initialize Database
+    description: Execute schema migration from last check point,
+      Create the tables if they don't exist
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
-      program: scripts/exec.sh
-      args: ['rm','-f', '${tls_keystore_location}']
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, migrate, validate]
+
+  - name: server_db_drop
+    label: Drop Database
+    description: Drop all the tables in the target database
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, drop]
+
+  - name: server_db_repair
+    label: Repair Database
+    description: Repairs the DATABASE_CHANGE_LOG by removing
+      failed migrations and correcting checksum of existing migration
+      script.
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, repair]
 
   topology:
-    maxInstances: 1
     minInstances: 1
 
   logging:
@@ -122,6 +151,56 @@ roles:
     pathType: serviceSpecific
     conformRegex: /.*
     default: /hwx-registry
+
+  - name: storage_provider
+    label: Storage Provider
+    description: The type of storage provider
+    required: true
+    type: string_enum
+    validValues: [InMemory, MySQL, PostgreSQL, Oracle]
+    default: InMemory
+
+  - name: storage_provider_db_hostname
+    label: Storage Provider DataSource Host
+    description: The hostname of the datasource
+    required: true
+    configurableInWizard: true
+    type: uri
+    default: localhost
+
+  - name: storage_provider_db_port
+    label: Storage Provider Database Port
+    description: The database port number. The default (0) uses the driver's default port.
+    required: true
+    configurableInWizard: true
+    type: port
+    outbound: true
+    zeroAllowed: true
+    default: 0
+
+  - name: storage_provider_db_name
+    label: Storage Provider Database Name
+    description: The name of the database for schema_registry
+    required: true
+    configurableInWizard: true
+    type: string
+    default: schema_registry
+
+  - name: storage_provider_db_user
+    label: Storage Provider DataSource User
+    description: Username used to login to data source
+    required: true
+    configurableInWizard: true
+    type: string
+    default: hwx-registry
+
+  - name: storage_provider_db_password
+    label: Storage Provider DataSource Password
+    description: Password used for connecting to data source
+    required: true
+    configurableInWizard: true
+    sensitive: true
+    type: password
 
   - name: jvm_heap_size
     configName: jvm.heap.size
