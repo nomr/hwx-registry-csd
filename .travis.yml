@@ -1,17 +1,17 @@
 language: java
 install:
-  - source ~/virtualenv/python2.7/bin/activate
-  - pip install click pyaml
+- source ~/virtualenv/python2.7/bin/activate
+- pip install click pyaml
 script:
-  - source ~/virtualenv/python2.7/bin/activate
-  - make info clean release
+- source ~/virtualenv/python2.7/bin/activate
+- make info clean release
 deploy:
   provider: releases
   api-key:
-    secure: s5zSfxsy2lxfmBHks+wRqp8jw070QulnLIg8eGR+ehXcAwagKJjU0KkCKZCahXWfY2k2rCYFvDWASHMlnDAZEuZ/yogiRAnexLVk7p6QNB5p3LVnYR8euvuI4Ke/8q5fZqhTfYiUK3BWCneHkPPQc1M1149Mb3AFXphGo4Rh2vdsejKM14OxzD7xI5AvKJh8r0J1MIe0P1fEq9y2mtnmH9yZ/FPgNkk5UnR5uxbrrl3mEHJVG00KOajxE5IfAhIiSZe4NZllYYpKuCcHfmJBbQnmPGV2ElSPKu4LzbpLEAPph9/rWIF1GMRmE76n+LZJYCbLUa4EcPGW9bjxAuucetEPBjiRqJp33PPeAwczCvjABM9fHbVKLzr2d5ZtaJ/nb/K/EItMEZ1CDjZvxOUFNXla5/PoxBvah0sgF/QRQo1cSOgk/cTxoGiL6yszzYvIywYkEv6bEkNFaeTA08XTYH54kKEx9TD4jee0Fk7lMPoyjT3JlDxsGQ4eG4runMxr8lugpNafCWA+dCFf009eTrPm03LQRQgGxRDkDc+nFC8OrQ8Nc0K5p1d4kHCSenOV74hXMc9ADaCH6ic7h4WJI07COaHRFXTtONuaCf+6vnk/dHMOqg4d+UHvvGBtaPC1yGexK6YCZDu5RaVF9fXzukP7QRZzS8voGbYE/1JR03Y=
+    secure: dyHrHZ09WxPhn54z8qIIZ3SB82bbKKTqHp6/Kk7qyKSIaw8IFhYyg3A3AuiHCoXsyQbBptT/0zPhjbZEmwhUANdzVhrcBH/rxsTZVcMeiTTxF5tRAa5bG7CbqyKpoUyetMOZqzZECKH7VWTlHw6Duh7qBG/zNYXrgRCknC/kwpTYdQwK+y8YAHJbSa1VyUZIWetM/DxIt/1pVnPAe6qX2E/r8VDFuUaUXefgsGM3RDvAyeSfUwN+jaUZAiyHHNSqo741MnUbqCa1E14ffrdtQ3rSlgwA/2PvR/UZCQ9z8+PtfzgGxrKjxRF1yNwsKADvGJcLT/Ej4YplwY6Ryq1mbh0Fi5CjHbx7RwekaSCpDXzL+Q1kAsYnSlzvTRZguP5JR8O7gD9pq1gfXpA4267gFUpDvqO0by2ZM+xRfF+0M7K2QBU2WSfD1E3adFlbmO10c72HpHKXQk0zjTnqFkgnPNwVopFKzYaWESs+l54qoW000MHpabcBp+MPfXUIs4y+t95eQakXbS+OXyzi/F7GQF3Dy3Mjl16QSjRsmEK6zeri8wtGYL3n1ZJTeqnknJm5fzYEFKjatZMY5vTUCj/AV6D9Nb9SH9Y1rAdI3VqlhuztU9WpS+5SdlTmAwrQ+tRmIAsy4EhhOPfowjTBMPFHnDtdN7ydFPs5uF2R9sHujfM=
   file_glob: true
   file:
-    - NIFI-TLS-*.jar
+  - NIFI-TLS-*.jar
   skip_cleanup: true
   on:
     tags: true
