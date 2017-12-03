@@ -36,7 +36,7 @@ move_aux_files() {
     local out=${CONF_DIR}/registry-sp.envsubst.yaml
     mv_if_exists $in $out
 
-    if [ ! -z "$ZK_QUORUM" ]; then
+    if [ ! -z ${ZK_QUORUM+x} ]; then
       mv_if_exists aux/registry-ha.envsubst.yaml ${CONF_DIR}/registry-ha.envsubst.yaml
     fi
 }

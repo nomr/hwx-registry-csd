@@ -25,7 +25,7 @@ parcel:
 
 serviceDependencies:
 - name: ZOOKEEPER
-  required: true
+  required: false
 
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
