@@ -34,18 +34,55 @@ kerberos: true
 
 commands:
 - name: service_zk_init
-  label: Initialize Zookeeper
-  description: Create the Zookeeper ZNode with proper ACLs
+  label: Create SchemaRegistry ZNode
+  description: Create SchemaRegistry root ZNode in Zookpeer with proper ACLs.
   roleCommand: server_zk_init
   roleName: HWX_REGISTRY_SERVER
   runMode: single
 
-- name: service_db_init
-  label: Initialize Database
-  description: Initializes the database.
+- name: service_zk_drop
+  label: Drop SchemaRegistry ZNode
+  description: Drop SchemaRegistry root ZNode.
+  roleCommand: server_zk_drop
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
+- name: service_db_create
+  label: Create SchemaRegistry Database Tables
+  description: Create SchemaRegistry database tables. Will skip if any tables exist.
+  roleCommand: server_db_create
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
+- name: service_db_validate
+  label: Validate SchemaRegistry Database Schema
+  description: Runs validation checks on SchemaRegistry database.
+  roleCommand: server_db_validate
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
+- name: service_db_migrate
+  label: Upgrade SchemaRegistry Database Schema
+  description: Upgrade SchemaRegistry Database Schema. Will skip if schema is up to date.
   roleCommand: server_db_migrate
   roleName: HWX_REGISTRY_SERVER
   runMode: single
+
+- name: service_db_repair
+  label: Repair SchemaRegistry Database Schema
+  description: Repairs the DATABASE_CHANGE_LOG by removing
+    failed migrations and correcting checksum of existing migration script.
+  roleCommand: server_db_repair
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
+- name: service_db_drop
+  label: Drop SchemaRegistry Database Tables
+  description: Drop all the SchemaRegistry tables.
+  roleCommand: server_db_drop
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
 
 parameters:
 - name: java_home
@@ -108,8 +145,8 @@ roles:
 
   commands:
   - name: server_zk_init
-    label: Initialize Zookeeper
-    description: Create the Zookeeper ZNode with proper ACLs
+    label: Create SchemaRegistry ZNode
+    description: Create SchemaRegistry root ZNode in Zookpeer with proper ACLs.
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
@@ -118,8 +155,8 @@ roles:
       args: [zookeeper, create]
 
   - name: server_zk_drop
-    label: Drop Zookeeper ZNode
-    description: Drop the application ZNode root
+    label: Drop SchemaRegistry ZNode
+    description: Drop SchemaRegistry root ZNode.
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
@@ -127,38 +164,56 @@ roles:
       program: scripts/control.sh
       args: [zookeeper, drop]
 
-  - name: server_db_migrate
-    label: Initialize Database
-    description: Execute schema migration from last check point,
-      Create the tables if they don't exist
+  - name: server_db_create
+    label: Create SchemaRegistry Database Tables
+    description: Create SchemaRegistry database tables. Will skip if any tables exist.
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
       environmentVariables: *environmentVariables
       program: scripts/control.sh
-      args: [bootstrap, migrate, validate]
+      args: [bootstrap, create ]
 
-  - name: server_db_drop
-    label: Drop Database
-    description: Drop all the tables in the target database
+  - name: server_db_validate
+    label: Validate SchemaRegistry Database Schema
+    description: Runs validation checks on SchemaRegistry database.
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
       environmentVariables: *environmentVariables
       program: scripts/control.sh
-      args: [bootstrap, drop]
+      args: [bootstrap, validate]
+
+  - name: server_db_migrate
+    label: Upgrade SchemaRegistry Database Schema
+    description: Upgrade SchemaRegistry Database Schema. Will skip if schema is up to date.
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, migrate]
 
   - name: server_db_repair
-    label: Repair Database
+    label: Repair SchemaRegistry Database Schema
     description: Repairs the DATABASE_CHANGE_LOG by removing
-      failed migrations and correcting checksum of existing migration
-      script.
+      failed migrations and correcting checksum of existing migration script.
     expectedExitCodes: [0]
     requiredRoleState: stopped
     commandRunner:
       environmentVariables: *environmentVariables
       program: scripts/control.sh
       args: [bootstrap, repair]
+
+  - name: server_db_drop
+    label: Drop SchemaRegistry Database Tables
+    description: Drop all the SchemaRegistry tables.
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [bootstrap, drop]
 
   topology:
     minInstances: 1
