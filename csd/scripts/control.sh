@@ -36,6 +36,10 @@ move_aux_files() {
     local out=${CONF_DIR}/registry-sp.envsubst.yaml
     mv_if_exists $in $out
 
+    in=aux/registry-sf-auth-${HWX_REGISTRY_AUTH}.envsubst.yaml
+    out=${CONF_DIR}/registry-sf-auth.envsubst.yaml
+    mv_if_exists $in $out
+
     if [ ! -z ${ZK_QUORUM+x} ]; then
       mv_if_exists aux/registry-ha.envsubst.yaml ${CONF_DIR}/registry-ha.envsubst.yaml
     fi
@@ -75,8 +79,11 @@ create_registry_yaml() {
 
     envsubst_all
 
+    append_and_delete ${CONF_DIR}/registry-sf-auth.yaml ${CONF_DIR}/registry-sf.yaml
+
     append_and_delete ${CONF_DIR}/registry-sp.yaml ${CONF_DIR}/registry.yaml
     append_and_delete ${CONF_DIR}/registry-ha.yaml ${CONF_DIR}/registry.yaml
+    append_and_delete ${CONF_DIR}/registry-sf.yaml ${CONF_DIR}/registry.yaml
 }
 
 registry_main() {

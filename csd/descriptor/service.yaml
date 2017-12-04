@@ -84,6 +84,8 @@ roles:
       JAVA_HOME: '${java_home}'
       REGISTRY_HEAP_OPTS: '-Xmx${jvm_heap_size}m -Xms${jvm_heap_size}m'
       REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
+      HWX_REGISTRY_AUTH: '${auth_provider}'
+      HWX_REGISTRY_AUTH_KRB_RULES: '${auth_provider_krb_rules}'
       HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_SP: '${storage_provider}'
@@ -231,6 +233,26 @@ roles:
     sensitive: true
     type: password
 
+  - name: auth_provider
+    label: Authentication Provider
+    description: The authentication backend
+    required: true
+    configurableInWizard: false
+    type: string_enum
+    validValues: [none, kerberos]
+    default: none
+
+  - name: auth_provider_krb_rules
+    label: Authentication Provider Kerberos Rules.
+    description: Rules for who is allowed to login.
+    required: true
+    type: string_array
+    separator: ' '
+    default:
+    - RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/
+    - RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT
+
+
   - name: jvm_heap_size
     configName: jvm.heap.size
     label: Java Maximum(and Initial) heap size
@@ -263,6 +285,8 @@ roles:
     auxConfigGenerators:
     - filename: jaas.envsubst.conf
       sourceFilename: aux/jaas.envsubst.conf
+    - filename: registry-sf.envsubst.yaml
+      sourceFilename: aux/registry-sf.envsubst.yaml
     - filename: registry.envsubst.yaml
       sourceFilename: aux/registry.envsubst.yaml
 
