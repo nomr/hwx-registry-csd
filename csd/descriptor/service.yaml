@@ -67,7 +67,12 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'http://${host}:${port}'
+    url: 'http://${host}:${port}/ui'
+
+  additionalExternalLinks:
+  - name: webserver_web_swagger
+    label: Swagger UI
+    url: 'http://${host}:${port}/swagger'
 
   kerberosPrincipals:
   - name: HWX_REGISTRY_PRINCIPAL
@@ -85,6 +90,7 @@ roles:
       REGISTRY_HEAP_OPTS: '-Xmx${jvm_heap_size}m -Xms${jvm_heap_size}m'
       REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
       HWX_REGISTRY_AUTH: '${auth_provider}'
+      HWX_REGISTRY_AUTH_SIMPLE_ANON: '${auth_provider_simple_anonymous}'
       HWX_REGISTRY_AUTH_KRB_RULES: '${auth_provider_krb_rules}'
       HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
@@ -235,22 +241,37 @@ roles:
 
   - name: auth_provider
     label: Authentication Provider
-    description: The authentication backend
+    description: Only simple anonymous access is tested at the moment.
     required: true
     configurableInWizard: false
     type: string_enum
-    validValues: [none, kerberos]
-    default: none
+    validValues: [simple, kerberos]
+    default: simple
+
+  - name: auth_provider_simple_anonymous
+    label: Authentication Provider Simple Anonymous Access
+    description: Whether to support allow anonymous access when using `simple`
+      mode.
+    required: true
+    type: boolean
+    default: true
 
   - name: auth_provider_krb_rules
-    label: Authentication Provider Kerberos Rules.
-    description: Rules for who is allowed to login.
+    label: Authentication Provider Kerberos UserMapping Rules.
+    description: 'Rules for mapping Kerberos Principal to Unix user names.
+      RULE:[num_of_components:format](match)s/from_pattern/to_pattern>/[g][/L]
+      It is a 3-step process. First, map user/instance@realm into $1/$2@$0.
+      Second, map [$0,$1,$2] to format. Third, apply the match regex to format, if
+      it matches, then the resulting name is given by to_pattern and turned into
+      lowercase if /L is present.
+      Examples:
+      <ul><li>RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/yarn/</li><li>RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/hdfs/<li></ul>'
     required: true
     type: string_array
     separator: ' '
+    conformRegex: '\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?(s/([^/]*)/([^/]*)/(g)?)?))/?(L)?'
     default:
-    - RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/$MAPRED_USER/
-    - RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/$HDFS_USER/DEFAULT
+    - DEFAULT
 
 
   - name: jvm_heap_size
