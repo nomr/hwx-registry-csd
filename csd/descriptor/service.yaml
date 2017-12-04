@@ -30,8 +30,17 @@ serviceDependencies:
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
 
+kerberos: true
+
 commands:
-- name: service_init
+- name: service_zk_init
+  label: Initialize Zookeeper
+  description: Create the Zookeeper ZNode with proper ACLs
+  roleCommand: server_zk_init
+  roleName: HWX_REGISTRY_SERVER
+  runMode: single
+
+- name: service_db_init
   label: Initialize Database
   description: Initializes the database.
   roleCommand: server_db_migrate
@@ -58,7 +67,20 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'http://${host}:${port}'
+    url: 'http://${host}:${port}/ui'
+
+  additionalExternalLinks:
+  - name: webserver_web_swagger
+    label: Swagger UI
+    url: 'http://${host}:${port}/swagger'
+
+  kerberosPrincipals:
+  - name: HWX_REGISTRY_PRINCIPAL
+    primary: ${principal}
+    instance: ${host}
+  - name: HWX_REGISTRY_HTTP_PRINCIPAL
+    primary: HTTP
+    instance: ${host}
 
   startRunner:
     environmentVariables: &environmentVariables
@@ -67,6 +89,9 @@ roles:
       JAVA_HOME: '${java_home}'
       REGISTRY_HEAP_OPTS: '-Xmx${jvm_heap_size}m -Xms${jvm_heap_size}m'
       REGISTRY_JVM_PERFORMANCE_OPTS: '${jvm_options}'
+      HWX_REGISTRY_AUTH: '${auth_provider}'
+      HWX_REGISTRY_AUTH_SIMPLE_ANON: '${auth_provider_simple_anonymous}'
+      HWX_REGISTRY_AUTH_KRB_RULES: '${auth_provider_krb_rules}'
       HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_SP: '${storage_provider}'
@@ -76,11 +101,32 @@ roles:
       HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
-      HWX_REGISTRY_ZK_ROOT: '${zk_root}'
+      HWX_REGISTRY_USER: '${user}'
+      HWX_REGISTRY_ZK_ROOT: '/${user}'
     program: scripts/control.sh
     args: [registry]
 
   commands:
+  - name: server_zk_init
+    label: Initialize Zookeeper
+    description: Create the Zookeeper ZNode with proper ACLs
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [zookeeper, create]
+
+  - name: server_zk_drop
+    label: Drop Zookeeper ZNode
+    description: Drop the application ZNode root
+    expectedExitCodes: [0]
+    requiredRoleState: stopped
+    commandRunner:
+      environmentVariables: *environmentVariables
+      program: scripts/control.sh
+      args: [zookeeper, drop]
+
   - name: server_db_migrate
     label: Initialize Database
     description: Execute schema migration from last check point,
@@ -143,16 +189,6 @@ roles:
     min: 1024
     default: 23443
 
-  - name: zk_root
-    configName: zk_root
-    label: Zookeeper ZNode root
-    description: Zookeeper ZNode root
-    required: true
-    type: path
-    pathType: serviceSpecific
-    conformRegex: /.*
-    default: /hwx-registry
-
   - name: storage_provider
     label: Storage Provider
     description: The type of storage provider
@@ -203,6 +239,41 @@ roles:
     sensitive: true
     type: password
 
+  - name: auth_provider
+    label: Authentication Provider
+    description: Only simple anonymous access is tested at the moment.
+    required: true
+    configurableInWizard: false
+    type: string_enum
+    validValues: [simple, kerberos]
+    default: simple
+
+  - name: auth_provider_simple_anonymous
+    label: Authentication Provider Simple Anonymous Access
+    description: Whether to support allow anonymous access when using `simple`
+      mode.
+    required: true
+    type: boolean
+    default: true
+
+  - name: auth_provider_krb_rules
+    label: Authentication Provider Kerberos UserMapping Rules.
+    description: 'Rules for mapping Kerberos Principal to Unix user names.
+      RULE:[num_of_components:format](match)s/from_pattern/to_pattern>/[g][/L]
+      It is a 3-step process. First, map user/instance@realm into $1/$2@$0.
+      Second, map [$0,$1,$2] to format. Third, apply the match regex to format, if
+      it matches, then the resulting name is given by to_pattern and turned into
+      lowercase if /L is present.
+      Examples:
+      <ul><li>RULE:[2:$1@$0]([jt]t@.*EXAMPLE.COM)s/.*/yarn/</li><li>RULE:[2:$1@$0]([nd]n@.*EXAMPLE.COM)s/.*/hdfs/<li></ul>'
+    required: true
+    type: string_array
+    separator: ' '
+    conformRegex: '\\s*((DEFAULT)|(RULE:\\[(\\d*):([^\\]]*)](\\(([^)]*)\\))?(s/([^/]*)/([^/]*)/(g)?)?))/?(L)?'
+    default:
+    - DEFAULT
+
+
   - name: jvm_heap_size
     configName: jvm.heap.size
     label: Java Maximum(and Initial) heap size
@@ -233,6 +304,10 @@ roles:
 
   configWriter:
     auxConfigGenerators:
+    - filename: jaas.envsubst.conf
+      sourceFilename: aux/jaas.envsubst.conf
+    - filename: registry-sf.envsubst.yaml
+      sourceFilename: aux/registry-sf.envsubst.yaml
     - filename: registry.envsubst.yaml
       sourceFilename: aux/registry.envsubst.yaml
 

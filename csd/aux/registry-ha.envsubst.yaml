@@ -5,7 +5,7 @@ haConfig:
     # This url is a list of ZK servers separated by ,
     connect.url: "${ZK_QUORUM}"
     # root node prefix in ZK for this instance
-    root: ${HWX_REGISTRY_ZK_ROOT}
+    root: ${HWX_REGISTRY_ZK_ROOT}/election
     session.timeout.ms: 30000
     connection.timeout.ms: 20000
     retry.limit: 5

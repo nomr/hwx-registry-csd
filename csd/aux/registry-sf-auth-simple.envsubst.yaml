@@ -1,0 +1,4 @@
+- className: "com.hortonworks.registries.auth.server.AuthenticationFilter"
+  params:
+    type: "simple"
+    simple.anonymous.allowed: ${HWX_REGISTRY_AUTH_SIMPLE_ANON}
