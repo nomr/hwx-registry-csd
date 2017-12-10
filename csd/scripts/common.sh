@@ -3,8 +3,6 @@ if [ ! -z ${COMMON_SCRIPT+x} ]; then
     . ${COMMON_SCRIPT}
 fi
 
-export PATH=$CFSSL_HOME/bin:$PATH
-
 append_and_delete() {
     local in=$1
     local out=$2

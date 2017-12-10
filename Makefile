@@ -72,4 +72,4 @@ validator.jar:
 
 %.sdl: %.yaml validator.jar
 	python yaml2json.py $< $@
-	java -jar validator.jar -s $@
+	java -jar validator.jar -l PKI -s $@

@@ -1,21 +1,9 @@
 #!/usr/bin/env bash
 set -efu -o pipefail
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 . ${DIR}/common.sh
-
-
-envsubst_all() {
-    local shell_format="\$CONF_DIR,\$ZK_QUORUM"
-    for i in ${!HWX_REGISTRY_*}; do
-        shell_format="${shell_format},\$$i"
-    done
-
-    for i in $(find . -maxdepth 1 -type f -name '*.envsubst*'); do
-        cat $i | envsubst $shell_format > ${i/\.envsubst/}
-        rm -f $i
-    done
-}
+[ -f pki-conf/init.sh ] && . pki-conf/init.sh
 
 move_aux_files() {
     local in=aux/registry-sp-${HWX_REGISTRY_SP}.envsubst.yaml
@@ -24,6 +12,10 @@ move_aux_files() {
 
     in=aux/registry-sf-auth-${HWX_REGISTRY_AUTH}.envsubst.yaml
     out=${CONF_DIR}/registry-sf-auth.envsubst.yaml
+    mv_if_exists $in $out
+
+    in=aux/registry-s-app[https].envsubst.yaml
+    out=${CONF_DIR}/registry-s-app.envsubst.yaml
     mv_if_exists $in $out
 
     if [ ! -z ${ZK_QUORUM+x} ]; then
@@ -53,20 +45,47 @@ load_variables() {
 
 }
 
+create_registry_certificates() {
+    # creates pki-conf/client{{,-key}.pem,.csr}
+    # creates pki-conf/cdhpki-default.crt
+    pushd pki-conf
+    pki_init
+    popd
+
+    keytool -import -noprompt  \
+        -file pki-conf/cdhpki-default.crt \
+        -alias root -default \
+        -keystore ${HWX_REGISTRY_TRUSTSTORE_LOCATION} \
+        -storepass "${HWX_REGISTRY_TRUSTSTORE_PASSWORD}"
+
+    openssl pkcs12 -export \
+        -in pki-conf/client.pem \
+        -inkey pki-conf/client-key.pem \
+        -CAfile pki-conf/cdhpki-default.crt \
+        -caname root \
+        -out ${HWX_REGISTRY_KEYSTORE_LOCATION} \
+        -passout env:HWX_REGISTRY_KEYSTORE_PASSWORD \
+        -name hwx-registry \
+        -chain
+}
+
 create_registry_yaml() {
     load_variables
     move_aux_files
 
-    envsubst_all
+    envsubst_all HWX_REGISTRY
 
     append_and_delete ${CONF_DIR}/registry-sf-auth.yaml ${CONF_DIR}/registry-sf.yaml
+    append_and_delete ${CONF_DIR}/registry-s-app.yaml ${CONF_DIR}/registry-s.yaml
 
     append_and_delete ${CONF_DIR}/registry-sp.yaml ${CONF_DIR}/registry.yaml
     append_and_delete ${CONF_DIR}/registry-ha.yaml ${CONF_DIR}/registry.yaml
     append_and_delete ${CONF_DIR}/registry-sf.yaml ${CONF_DIR}/registry.yaml
+    append_and_delete ${CONF_DIR}/registry-s.yaml ${CONF_DIR}/registry.yaml
 }
 
 registry_main() {
+    create_registry_certificates
     create_registry_yaml
 
     locate_java_home

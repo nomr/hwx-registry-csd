@@ -22,10 +22,13 @@ maxInstances: 1
 parcel:
   repoUrl: https://github.com/nomr/hwx-registry-parcel/releases/download/v0.4.0+registry0.0.1
   requiredTags: [hwx-registry]
+  optionalTags:
+  - pki
 
 serviceDependencies:
 - name: ZOOKEEPER
   required: false
+- name: PKI
 
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
@@ -129,6 +132,8 @@ roles:
       HWX_REGISTRY_AUTH: '${auth_provider}'
       HWX_REGISTRY_AUTH_SIMPLE_ANON: '${auth_provider_simple_anonymous}'
       HWX_REGISTRY_AUTH_KRB_RULES: '${auth_provider_krb_rules}'
+      HWX_REGISTRY_KEYSTORE_LOCATION: 'keystore.p12'
+      HWX_REGISTRY_KEYSTORE_PASSWORD: 'changeit'
       HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_SP: '${storage_provider}'
@@ -138,6 +143,8 @@ roles:
       HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
+      HWX_REGISTRY_TRUSTSTORE_LOCATION: 'truststore.p12'
+      HWX_REGISTRY_TRUSTSTORE_PASSWORD: 'changeit'
       HWX_REGISTRY_USER: '${user}'
       HWX_REGISTRY_ZK_ROOT: '/${user}'
     program: scripts/control.sh
@@ -242,7 +249,7 @@ roles:
     required: true
     type: port
     min: 1024
-    default: 23443
+    default: 24443
 
   - name: storage_provider
     label: Storage Provider
@@ -328,6 +335,45 @@ roles:
     default:
     - DEFAULT
 
+  - name: csr_hosts
+    configName: CSR_SAN
+    label: CSR Subject Alternate Name
+    description: The Schema Registry Subject Alternative Names.
+    required: false
+    type: uri_array
+    separator: '","'
+    default:
+
+  - name: csr_name_org_unit
+    configName: CSR_OUS
+    label: CSR X.509 Additional Organizational Units
+    description: The X.509 attributes for the certificate, i.e.
+      country(C), state or province(S), locality(L), organization(O),
+      organizational unit(OU), and the common name(CN). All fields are
+      optional, but if a CN is not defined, then it will default to
+      the machine's hostname.
+    type: string_array
+    separator: '"},{"OU":"'
+    minLength: 1
+    default:
+    - Schema Registry
+
+  - name: csr_key_algo
+    configName: CSR_KEY_ALGO
+    label: CSR Key Algorithm
+    description: The encryption algorithm used by the key
+    required: true
+    type: string_enum
+    validValues: [rsa,ecdsa]
+    default: rsa
+  - name: csr_key_size
+    configName: CSR_KEY_SIZE
+    label: CSR Key Algorithm
+    description: The size of the encryption key. For RSA pick something
+      between 2048 and 8192. For ECDSA pick one of 256, 384 or 521.
+    required: true
+    type: long
+    default: 4096
 
   - name: jvm_heap_size
     configName: jvm.heap.size
@@ -361,24 +407,21 @@ roles:
     auxConfigGenerators:
     - filename: jaas.envsubst.conf
       sourceFilename: aux/jaas.envsubst.conf
+    - filename: registry-s.envsubst.yaml
+      sourceFilename: aux/registry-s.envsubst.yaml
     - filename: registry-sf.envsubst.yaml
       sourceFilename: aux/registry-sf.envsubst.yaml
     - filename: registry.envsubst.yaml
       sourceFilename: aux/registry.envsubst.yaml
 
     generators:
-    - filename: server.hadoop_xml
-      configFormat: hadoop_xml
+    - filename: pki-conf/client-csr.vars
+      configFormat: properties
       includedParams:
-      - port
-      additionalConfigs:
-      - {key: days, value: '1095'}
-      - {key: keySize, value: '2048'}
-      - {key: keyPairAlgorithm, value: RSA}
-      - {key: signingAlgorithm, value: SHA256WITHRSA}
-      - {key: keyStoreType, value: jks}
-      - {key: caHostname, value: '${host}'}
-      - {key: reorderDn, value: true}
+      - csr_hosts
+      - csr_key_algo
+      - csr_key_size
+      - csr_name_org_unit
 
 #gateway:
 #  alternatives:
