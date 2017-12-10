@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-
 set -efu -o pipefail
 
-. ${COMMON_SCRIPT}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+. ${DIR}/common.sh
+
 
 envsubst_all() {
     local shell_format="\$CONF_DIR,\$ZK_QUORUM"
@@ -14,21 +15,6 @@ envsubst_all() {
         cat $i | envsubst $shell_format > ${i/\.envsubst/}
         rm -f $i
     done
-}
-
-append_and_delete() {
-    local in=$1
-    local out=$2
-    if [ -e $in ]; then
-      cat $in >> $out
-      rm -f $in
-    fi
-}
-
-mv_if_exists() {
-    if [ -e $1 ]; then
-      mv $1 $2
-    fi
 }
 
 move_aux_files() {
@@ -45,12 +31,6 @@ move_aux_files() {
     fi
 }
 
-get_property() {
-    local file=$1
-    local key=$2
-    local line=$(grep "$key=" ${file}.properties | tail -1)
-    echo "${line/$key=/}"
-}
 
 load_variables() {
     HWX_REGISTRY_SP_DB_PORT=":${HWX_REGISTRY_SP_DB_PORT}"
