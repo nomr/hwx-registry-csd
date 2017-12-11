@@ -1,0 +1,11 @@
+  applicationConnectors:
+  - type: https
+    port: ${HWX_REGISTRY_PORT}
+    keyStoreType: JKS
+    keyStorePath: ${HWX_REGISTRY_KEYSTORE_LOCATION}
+    keyStorePassword: ${HWX_REGISTRY_KEYSTORE_PASSWORD}
+    validateCerts: false
+    validatePeers: false
+    trustStoreType: JKS
+    trustStorePath: ${HWX_REGISTRY_TRUSTSTORE_LOCATION}
+    trustStorePassword: ${HWX_REGISTRY_TRUSTSTORE_PASSWORD}

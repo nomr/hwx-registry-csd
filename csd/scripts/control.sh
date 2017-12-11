@@ -1,35 +1,9 @@
 #!/usr/bin/env bash
-
 set -efu -o pipefail
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-. ${COMMON_SCRIPT}
-
-envsubst_all() {
-    local shell_format="\$CONF_DIR,\$ZK_QUORUM"
-    for i in ${!HWX_REGISTRY_*}; do
-        shell_format="${shell_format},\$$i"
-    done
-
-    for i in $(find . -maxdepth 1 -type f -name '*.envsubst*'); do
-        cat $i | envsubst $shell_format > ${i/\.envsubst/}
-        rm -f $i
-    done
-}
-
-append_and_delete() {
-    local in=$1
-    local out=$2
-    if [ -e $in ]; then
-      cat $in >> $out
-      rm -f $in
-    fi
-}
-
-mv_if_exists() {
-    if [ -e $1 ]; then
-      mv $1 $2
-    fi
-}
+. ${DIR}/common.sh
+PKI_ENABLED=${PKI_ENABLED-false}
 
 move_aux_files() {
     local in=aux/registry-sp-${HWX_REGISTRY_SP}.envsubst.yaml
@@ -40,22 +14,28 @@ move_aux_files() {
     out=${CONF_DIR}/registry-sf-auth.envsubst.yaml
     mv_if_exists $in $out
 
+    in=aux/registry-s-app[${HWX_REGISTRY_SERVER_APP}].envsubst.yaml
+    out=${CONF_DIR}/registry-s-app.envsubst.yaml
+    mv_if_exists $in $out
+
     if [ ! -z ${ZK_QUORUM+x} ]; then
       mv_if_exists aux/registry-ha.envsubst.yaml ${CONF_DIR}/registry-ha.envsubst.yaml
     fi
 }
 
-get_property() {
-    local file=$1
-    local key=$2
-    local line=$(grep "$key=" ${file}.properties | tail -1)
-    echo "${line/$key=/}"
-}
 
 load_variables() {
+
     HWX_REGISTRY_SP_DB_PORT=":${HWX_REGISTRY_SP_DB_PORT}"
     if [ "${HWX_REGISTRY_SP_DB_PORT}" == ":0" ]; then
         HWX_REGISTRY_SP_DB_PORT=""
+    fi
+
+    # Pickup the TRUSTSTORE and KEYSTORE Locations
+    HWX_REGISTRY_SERVER_APP=http
+    if [ ${PKI_ENABLED} == "true" ]; then
+        HWX_REGISTRY_SERVER_APP=https
+        load_vars HWX_REGISTRY pki-conf/client-csr
     fi
 
     # Kerberos Variables
@@ -73,20 +53,29 @@ load_variables() {
 
 }
 
+create_registry_certificates() {
+    if [ $PKI_ENABLED == "true" ]; then
+        pki_init
+    fi
+}
+
 create_registry_yaml() {
     load_variables
     move_aux_files
 
-    envsubst_all
+    envsubst_all HWX_REGISTRY
 
     append_and_delete ${CONF_DIR}/registry-sf-auth.yaml ${CONF_DIR}/registry-sf.yaml
+    append_and_delete ${CONF_DIR}/registry-s-app.yaml ${CONF_DIR}/registry-s.yaml
 
     append_and_delete ${CONF_DIR}/registry-sp.yaml ${CONF_DIR}/registry.yaml
     append_and_delete ${CONF_DIR}/registry-ha.yaml ${CONF_DIR}/registry.yaml
     append_and_delete ${CONF_DIR}/registry-sf.yaml ${CONF_DIR}/registry.yaml
+    append_and_delete ${CONF_DIR}/registry-s.yaml ${CONF_DIR}/registry.yaml
 }
 
 registry_main() {
+    create_registry_certificates
     create_registry_yaml
 
     locate_java_home

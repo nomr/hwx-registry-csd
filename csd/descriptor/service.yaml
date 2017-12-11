@@ -22,10 +22,13 @@ maxInstances: 1
 parcel:
   repoUrl: https://github.com/nomr/hwx-registry-parcel/releases/download/v0.4.0+registry0.0.1
   requiredTags: [hwx-registry]
+  optionalTags:
+  - pki
 
 serviceDependencies:
 - name: ZOOKEEPER
   required: false
+- name: PKI
 
 rolesWithExternalLinks:
 - HWX_REGISTRY_SERVER
@@ -104,12 +107,12 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'http://${host}:${port}/ui'
+    url: 'https://${host}:${port}/ui'
 
   additionalExternalLinks:
   - name: webserver_web_swagger
     label: Swagger UI
-    url: 'http://${host}:${port}/swagger'
+    url: 'https://${host}:${port}/swagger'
 
   kerberosPrincipals:
   - name: HWX_REGISTRY_PRINCIPAL
@@ -242,7 +245,7 @@ roles:
     required: true
     type: port
     min: 1024
-    default: 23443
+    default: 24443
 
   - name: storage_provider
     label: Storage Provider
@@ -328,6 +331,41 @@ roles:
     default:
     - DEFAULT
 
+  - name: pki_truststore_password
+    configName: TRUSTSTORE_PASSWORD
+    label: Node TLS Certificate Trust Store Password
+    description: The password for the Node TLS/SSL Certificate Trust Store File.
+    required: true
+    type: string
+    initType: randomBase64
+  - name: pki_keystore_password
+    configName: KEYSTORE_PASSWORD
+    label: Node TLS Server JKS Keystore File Password
+    description: The password for the Node JKS keystore file.
+    required: true
+    type: string
+    initType: randomBase64
+  - name: csr_hosts
+    configName: CSR_SAN
+    label: CSR Subject Alternate Name
+    description: The Schema Registry Subject Alternative Names.
+    required: false
+    type: uri_array
+    separator: '","'
+    default:
+  - name: csr_name_org_unit
+    configName: CSR_OUS
+    label: CSR X.509 Additional Organizational Units
+    description: The X.509 attributes for the certificate, i.e.
+      country(C), state or province(S), locality(L), organization(O),
+      organizational unit(OU), and the common name(CN). All fields are
+      optional, but if a CN is not defined, then it will default to
+      the machine's hostname.
+    type: string_array
+    separator: '"},{"OU":"'
+    minLength: 1
+    default:
+    - Schema Registry
 
   - name: jvm_heap_size
     configName: jvm.heap.size
@@ -361,24 +399,33 @@ roles:
     auxConfigGenerators:
     - filename: jaas.envsubst.conf
       sourceFilename: aux/jaas.envsubst.conf
+    - filename: registry-s.envsubst.yaml
+      sourceFilename: aux/registry-s.envsubst.yaml
     - filename: registry-sf.envsubst.yaml
       sourceFilename: aux/registry-sf.envsubst.yaml
     - filename: registry.envsubst.yaml
       sourceFilename: aux/registry.envsubst.yaml
 
     generators:
-    - filename: server.hadoop_xml
-      configFormat: hadoop_xml
+    - filename: pki-conf/client-csr.vars
+      configFormat: properties
       includedParams:
-      - port
+      - csr_hosts
+      - csr_name_org_unit
+      - pki_keystore_password
+      - pki_truststore_password
       additionalConfigs:
-      - {key: days, value: '1095'}
-      - {key: keySize, value: '2048'}
-      - {key: keyPairAlgorithm, value: RSA}
-      - {key: signingAlgorithm, value: SHA256WITHRSA}
-      - {key: keyStoreType, value: jks}
-      - {key: caHostname, value: '${host}'}
-      - {key: reorderDn, value: true}
+      - key: CSR_CN
+        value: "${host}"
+      - key: CSR_KEY_ALGO
+        value: rsa
+      - key: CSR_KEY_SIZE
+        value: 4096
+      - key: KEYSTORE_LOCATION
+        value: 'keystore.jks'
+      - key: TRUSTSTORE_LOCATION
+        value: 'truststore.jks'
+
 
 #gateway:
 #  alternatives:

@@ -26,11 +26,6 @@ swagger:
 #enable CORS, may want to disable in production
 enableCors: false
 
-server:
-  applicationConnectors:
-    - type: http
-      port: ${HWX_REGISTRY_PORT}
-
 # Logging settings.
 logging:
   level: ${HWX_REGISTRY_LOG_THRESHOLD}
