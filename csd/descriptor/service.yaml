@@ -107,12 +107,12 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'http://${host}:${port}/ui'
+    url: 'https://${host}:${port}/ui'
 
   additionalExternalLinks:
   - name: webserver_web_swagger
     label: Swagger UI
-    url: 'http://${host}:${port}/swagger'
+    url: 'https://${host}:${port}/swagger'
 
   kerberosPrincipals:
   - name: HWX_REGISTRY_PRINCIPAL

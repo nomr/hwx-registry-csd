@@ -3,7 +3,9 @@ set -efu -o pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . ${DIR}/common.sh
+HWX_REGISTRY_SERVER_APP=https
 pki_init() {
+    HWX_REGISTRY_SERVER_APP=http
     return 0
 }
 [ -f pki-conf/init.sh ] && . pki-conf/init.sh
@@ -18,7 +20,7 @@ move_aux_files() {
     out=${CONF_DIR}/registry-sf-auth.envsubst.yaml
     mv_if_exists $in $out
 
-    in=aux/registry-s-app[https].envsubst.yaml
+    in=aux/registry-s-app[${HWX_REGISTRY_SERVER_APP}].envsubst.yaml
     out=${CONF_DIR}/registry-s-app.envsubst.yaml
     mv_if_exists $in $out
 
