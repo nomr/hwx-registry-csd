@@ -11,7 +11,7 @@ deploy:
     secure: dyHrHZ09WxPhn54z8qIIZ3SB82bbKKTqHp6/Kk7qyKSIaw8IFhYyg3A3AuiHCoXsyQbBptT/0zPhjbZEmwhUANdzVhrcBH/rxsTZVcMeiTTxF5tRAa5bG7CbqyKpoUyetMOZqzZECKH7VWTlHw6Duh7qBG/zNYXrgRCknC/kwpTYdQwK+y8YAHJbSa1VyUZIWetM/DxIt/1pVnPAe6qX2E/r8VDFuUaUXefgsGM3RDvAyeSfUwN+jaUZAiyHHNSqo741MnUbqCa1E14ffrdtQ3rSlgwA/2PvR/UZCQ9z8+PtfzgGxrKjxRF1yNwsKADvGJcLT/Ej4YplwY6Ryq1mbh0Fi5CjHbx7RwekaSCpDXzL+Q1kAsYnSlzvTRZguP5JR8O7gD9pq1gfXpA4267gFUpDvqO0by2ZM+xRfF+0M7K2QBU2WSfD1E3adFlbmO10c72HpHKXQk0zjTnqFkgnPNwVopFKzYaWESs+l54qoW000MHpabcBp+MPfXUIs4y+t95eQakXbS+OXyzi/F7GQF3Dy3Mjl16QSjRsmEK6zeri8wtGYL3n1ZJTeqnknJm5fzYEFKjatZMY5vTUCj/AV6D9Nb9SH9Y1rAdI3VqlhuztU9WpS+5SdlTmAwrQ+tRmIAsy4EhhOPfowjTBMPFHnDtdN7ydFPs5uF2R9sHujfM=
   file_glob: true
   file:
-  - NIFI-TLS-*.jar
+  - HWX-REGISTRY-*.jar
   skip_cleanup: true
   on:
     tags: true
