@@ -132,8 +132,6 @@ roles:
       HWX_REGISTRY_AUTH: '${auth_provider}'
       HWX_REGISTRY_AUTH_SIMPLE_ANON: '${auth_provider_simple_anonymous}'
       HWX_REGISTRY_AUTH_KRB_RULES: '${auth_provider_krb_rules}'
-      HWX_REGISTRY_KEYSTORE_LOCATION: 'keystore.p12'
-      HWX_REGISTRY_KEYSTORE_PASSWORD: 'changeit'
       HWX_REGISTRY_LOG_DIR: '${log_dir}'
       HWX_REGISTRY_PORT: '${port}'
       HWX_REGISTRY_SP: '${storage_provider}'
@@ -143,8 +141,6 @@ roles:
       HWX_REGISTRY_SP_DB_USER: '${storage_provider_db_user}'
       HWX_REGISTRY_SP_DB_PASSWORD: '${storage_provider_db_password}'
       HWX_REGISTRY_STORAGE_LOCATION: '${registry_home}'
-      HWX_REGISTRY_TRUSTSTORE_LOCATION: 'truststore.p12'
-      HWX_REGISTRY_TRUSTSTORE_PASSWORD: 'changeit'
       HWX_REGISTRY_USER: '${user}'
       HWX_REGISTRY_ZK_ROOT: '/${user}'
     program: scripts/control.sh
@@ -335,6 +331,20 @@ roles:
     default:
     - DEFAULT
 
+  - name: pki_truststore_password
+    configName: TRUSTSTORE_PASSWORD
+    label: Node TLS Certificate Trust Store Password
+    description: The password for the Node TLS/SSL Certificate Trust Store File.
+    required: true
+    type: string
+    initType: randomBase64
+  - name: pki_keystore_password
+    configName: KEYSTORE_PASSWORD
+    label: Node TLS Server JKS Keystore File Password
+    description: The password for the Node JKS keystore file.
+    required: true
+    type: string
+    initType: randomBase64
   - name: csr_hosts
     configName: CSR_SAN
     label: CSR Subject Alternate Name
@@ -343,7 +353,6 @@ roles:
     type: uri_array
     separator: '","'
     default:
-
   - name: csr_name_org_unit
     configName: CSR_OUS
     label: CSR X.509 Additional Organizational Units
@@ -357,23 +366,6 @@ roles:
     minLength: 1
     default:
     - Schema Registry
-
-  - name: csr_key_algo
-    configName: CSR_KEY_ALGO
-    label: CSR Key Algorithm
-    description: The encryption algorithm used by the key
-    required: true
-    type: string_enum
-    validValues: [rsa,ecdsa]
-    default: rsa
-  - name: csr_key_size
-    configName: CSR_KEY_SIZE
-    label: CSR Key Algorithm
-    description: The size of the encryption key. For RSA pick something
-      between 2048 and 8192. For ECDSA pick one of 256, 384 or 521.
-    required: true
-    type: long
-    default: 4096
 
   - name: jvm_heap_size
     configName: jvm.heap.size
@@ -419,9 +411,21 @@ roles:
       configFormat: properties
       includedParams:
       - csr_hosts
-      - csr_key_algo
-      - csr_key_size
       - csr_name_org_unit
+      - pki_keystore_password
+      - pki_truststore_password
+      additionalConfigs:
+      - key: CSR_CN
+        value: "${host}"
+      - key: CSR_KEY_ALGO
+        value: rsa
+      - key: CSR_KEY_SIZE
+        value: 4096
+      - key: KEYSTORE_LOCATION
+        value: 'keystore.jks'
+      - key: TRUSTSTORE_LOCATION
+        value: 'truststore.jks'
+
 
 #gateway:
 #  alternatives:

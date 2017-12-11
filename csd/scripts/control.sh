@@ -3,7 +3,11 @@ set -efu -o pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . ${DIR}/common.sh
+pki_init() {
+    return 0
+}
 [ -f pki-conf/init.sh ] && . pki-conf/init.sh
+
 
 move_aux_files() {
     local in=aux/registry-sp-${HWX_REGISTRY_SP}.envsubst.yaml
@@ -30,6 +34,9 @@ load_variables() {
         HWX_REGISTRY_SP_DB_PORT=""
     fi
 
+    # Pickup the TRUSTSTORE and KEYSTORE Locations
+    load_vars HWX_REGISTRY pki-conf/client-csr
+
     # Kerberos Variables
     export HWX_REGISTRY_KEYTAB=${CONF_DIR}/${HWX_REGISTRY_USER/-/_}.keytab
 
@@ -46,27 +53,7 @@ load_variables() {
 }
 
 create_registry_certificates() {
-    # creates pki-conf/client{{,-key}.pem,.csr}
-    # creates pki-conf/cdhpki-default.crt
-    pushd pki-conf
     pki_init
-    popd
-
-    keytool -import -noprompt  \
-        -file pki-conf/cdhpki-default.crt \
-        -alias root -default \
-        -keystore ${HWX_REGISTRY_TRUSTSTORE_LOCATION} \
-        -storepass "${HWX_REGISTRY_TRUSTSTORE_PASSWORD}"
-
-    openssl pkcs12 -export \
-        -in pki-conf/client.pem \
-        -inkey pki-conf/client-key.pem \
-        -CAfile pki-conf/cdhpki-default.crt \
-        -caname root \
-        -out ${HWX_REGISTRY_KEYSTORE_LOCATION} \
-        -passout env:HWX_REGISTRY_KEYSTORE_PASSWORD \
-        -name hwx-registry \
-        -chain
 }
 
 create_registry_yaml() {
