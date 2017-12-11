@@ -3,13 +3,6 @@ set -efu -o pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . ${DIR}/common.sh
-HWX_REGISTRY_SERVER_APP=https
-pki_init() {
-    HWX_REGISTRY_SERVER_APP=http
-    return 0
-}
-[ -f pki-conf/init.sh ] && . pki-conf/init.sh
-
 
 move_aux_files() {
     local in=aux/registry-sp-${HWX_REGISTRY_SP}.envsubst.yaml
@@ -31,13 +24,18 @@ move_aux_files() {
 
 
 load_variables() {
+
     HWX_REGISTRY_SP_DB_PORT=":${HWX_REGISTRY_SP_DB_PORT}"
     if [ "${HWX_REGISTRY_SP_DB_PORT}" == ":0" ]; then
         HWX_REGISTRY_SP_DB_PORT=""
     fi
 
     # Pickup the TRUSTSTORE and KEYSTORE Locations
-    load_vars HWX_REGISTRY pki-conf/client-csr
+    HWX_REGISTRY_SERVER_APP=http
+    if [ ! -z ${PKI_ENABLED+x} ]; then
+        HWX_REGISTRY_SERVER_APP=https
+        load_vars HWX_REGISTRY pki-conf/client-csr
+    fi
 
     # Kerberos Variables
     export HWX_REGISTRY_KEYTAB=${CONF_DIR}/${HWX_REGISTRY_USER/-/_}.keytab
