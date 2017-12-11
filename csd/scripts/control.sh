@@ -3,6 +3,7 @@ set -efu -o pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . ${DIR}/common.sh
+PKI_ENABLED=${PKI_ENABLED-false}
 
 move_aux_files() {
     local in=aux/registry-sp-${HWX_REGISTRY_SP}.envsubst.yaml
@@ -32,7 +33,7 @@ load_variables() {
 
     # Pickup the TRUSTSTORE and KEYSTORE Locations
     HWX_REGISTRY_SERVER_APP=http
-    if [ ! -z ${PKI_ENABLED+x} ]; then
+    if [ ${PKI_ENABLED} == "true" ]; then
         HWX_REGISTRY_SERVER_APP=https
         load_vars HWX_REGISTRY pki-conf/client-csr
     fi
@@ -53,7 +54,9 @@ load_variables() {
 }
 
 create_registry_certificates() {
-    pki_init
+    if [ $PKI_ENABLED == "true" ]; then
+        pki_init
+    fi
 }
 
 create_registry_yaml() {
