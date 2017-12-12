@@ -107,7 +107,7 @@ roles:
   externalLink:
     name: webserver_web_ui
     label: Registry
-    url: 'https://${host}:${port}/ui'
+    url: 'https://${host}:${port}/'
 
   additionalExternalLinks:
   - name: webserver_web_swagger
