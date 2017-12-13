@@ -1,3 +1,4 @@
+  # Server HTTPS Application Connector
   applicationConnectors:
   - type: https
     port: ${HWX_REGISTRY_PORT}

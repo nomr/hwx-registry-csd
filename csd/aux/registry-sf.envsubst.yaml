@@ -1,7 +1,4 @@
+
+#
+# Servlet Filters
 servletFilters:
-- className: "com.hortonworks.registries.schemaregistry.webservice.RewriteUriFilter"
-  params:
-    # value format is [<targetpath>,<paths-should-be-redirected-to>,*|]*
-    # below /subjects and /schemas/ids are forwarded to /api/v1/confluent
-    forwardPaths: "/api/v1/confluent,/subjects/*,/schemas/ids/*"
-    redirectPaths: "/ui/,/"

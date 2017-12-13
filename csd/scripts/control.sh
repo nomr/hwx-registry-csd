@@ -5,18 +5,44 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . ${DIR}/common.sh
 PKI_ENABLED=${PKI_ENABLED-false}
 
-move_aux_files() {
-    local in=aux/registry-sp-${HWX_REGISTRY_SP}.envsubst.yaml
+HWX_REGISTRY_VERSION=$(basename $HWX_REGISTRY_HOME | sed -E -e 's/HWX_REGISTRY-(([0-9]\.?){3})(-.*|$)/\1/')
+
+move_aux_s_files() {
+    local suffix=envsubst.yaml
+    local in=aux/registry-s[${HWX_REGISTRY_VERSION}].${suffix}
+    local out=${CONF_DIR}/registry-s.${suffix}
+    mv_if_exists $in $out
+
+    in=aux/registry-s-app[${HWX_REGISTRY_SERVER_APP}].${suffix}
+    out=${CONF_DIR}/registry-s-app.${suffix}
+    mv_if_exists $in $out
+}
+
+move_aux_sf_files() {
+    local suffix=envsubst.yaml
+    local in=aux/registry-sf.${suffix}
+    local out=${CONF_DIR}/registry-sf.${suffix}
+    mv_if_exists $in $out
+
+    in=aux/registry-sf-auth[${HWX_REGISTRY_AUTH}].${suffix}
+    out=${CONF_DIR}/registry-sf-auth.${suffix}
+    mv_if_exists $in $out
+
+    in=aux/registry-sf-rewriteuri[${HWX_REGISTRY_VERSION}].${suffix}
+    out=${CONF_DIR}/registry-sf-rewriteuri.${suffix}
+    mv_if_exists $in $out
+}
+
+move_aux_sp_files() {
+    local in=aux/registry-sp[${HWX_REGISTRY_SP}].envsubst.yaml
     local out=${CONF_DIR}/registry-sp.envsubst.yaml
     mv_if_exists $in $out
+}
 
-    in=aux/registry-sf-auth-${HWX_REGISTRY_AUTH}.envsubst.yaml
-    out=${CONF_DIR}/registry-sf-auth.envsubst.yaml
-    mv_if_exists $in $out
-
-    in=aux/registry-s-app[${HWX_REGISTRY_SERVER_APP}].envsubst.yaml
-    out=${CONF_DIR}/registry-s-app.envsubst.yaml
-    mv_if_exists $in $out
+move_aux_files() {
+    move_aux_s_files
+    move_aux_sf_files
+    move_aux_sp_files
 
     if [ ! -z ${ZK_QUORUM+x} ]; then
       mv_if_exists aux/registry-ha.envsubst.yaml ${CONF_DIR}/registry-ha.envsubst.yaml
@@ -65,13 +91,16 @@ create_registry_yaml() {
 
     envsubst_all HWX_REGISTRY
 
-    append_and_delete ${CONF_DIR}/registry-sf-auth.yaml ${CONF_DIR}/registry-sf.yaml
+    append_and_delete ${CONF_DIR}/registry-ha.yaml ${CONF_DIR}/registry.yaml
+
     append_and_delete ${CONF_DIR}/registry-s-app.yaml ${CONF_DIR}/registry-s.yaml
+    append_and_delete ${CONF_DIR}/registry-s.yaml ${CONF_DIR}/registry.yaml
+
+    append_and_delete ${CONF_DIR}/registry-sf-auth.yaml ${CONF_DIR}/registry-sf.yaml
+    append_and_delete ${CONF_DIR}/registry-sf-rewriteuri.yaml ${CONF_DIR}/registry-sf.yaml
+    append_and_delete ${CONF_DIR}/registry-sf.yaml ${CONF_DIR}/registry.yaml
 
     append_and_delete ${CONF_DIR}/registry-sp.yaml ${CONF_DIR}/registry.yaml
-    append_and_delete ${CONF_DIR}/registry-ha.yaml ${CONF_DIR}/registry.yaml
-    append_and_delete ${CONF_DIR}/registry-sf.yaml ${CONF_DIR}/registry.yaml
-    append_and_delete ${CONF_DIR}/registry-s.yaml ${CONF_DIR}/registry.yaml
 }
 
 registry_main() {
@@ -100,7 +129,22 @@ bootstrap_main() {
     TABLE_INITIALIZER_MAIN_CLASS=com.hortonworks.registries.storage.tool.TablesInitializer
 
     for cmd in $@; do
-      ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --$cmd
+      case "$cmd" in
+          drop)
+              ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR\
+                  -cp ${CLASSPATH} \
+                  ${TABLE_INITIALIZER_MAIN_CLASS} \
+                      -c ${CONFIG_FILE_PATH} \
+                      -s ${SCRIPT_ROOT_DIR} --$cmd <<< "y"
+              ;;
+          *)
+              ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR \
+                  -cp ${CLASSPATH} \
+                  ${TABLE_INITIALIZER_MAIN_CLASS} \
+                      -c ${CONFIG_FILE_PATH} \
+                      -s ${SCRIPT_ROOT_DIR} --$cmd
+              ;;
+      esac
     done
 }
 

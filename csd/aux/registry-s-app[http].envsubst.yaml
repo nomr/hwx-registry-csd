@@ -1,3 +1,4 @@
+  # Server applicationConnectors
   applicationConnectors:
   - type: http
     port: ${HWX_REGISTRY_PORT}
