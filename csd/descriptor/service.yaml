@@ -399,10 +399,6 @@ roles:
     auxConfigGenerators:
     - filename: jaas.envsubst.conf
       sourceFilename: aux/jaas.envsubst.conf
-    - filename: registry-s.envsubst.yaml
-      sourceFilename: aux/registry-s.envsubst.yaml
-    - filename: registry-sf.envsubst.yaml
-      sourceFilename: aux/registry-sf.envsubst.yaml
     - filename: registry.envsubst.yaml
       sourceFilename: aux/registry.envsubst.yaml
 
