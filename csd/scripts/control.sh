@@ -129,7 +129,22 @@ bootstrap_main() {
     TABLE_INITIALIZER_MAIN_CLASS=com.hortonworks.registries.storage.tool.TablesInitializer
 
     for cmd in $@; do
-      ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR  -cp ${CLASSPATH} ${TABLE_INITIALIZER_MAIN_CLASS} -c ${CONFIG_FILE_PATH} -s ${SCRIPT_ROOT_DIR} --$cmd
+      case "$cmd" in
+          drop)
+              ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR\
+                  -cp ${CLASSPATH} \
+                  ${TABLE_INITIALIZER_MAIN_CLASS} \
+                      -c ${CONFIG_FILE_PATH} \
+                      -s ${SCRIPT_ROOT_DIR} --$cmd <<< "y"
+              ;;
+          *)
+              ${JAVA} -Dbootstrap.dir=$BOOTSTRAP_DIR \
+                  -cp ${CLASSPATH} \
+                  ${TABLE_INITIALIZER_MAIN_CLASS} \
+                      -c ${CONFIG_FILE_PATH} \
+                      -s ${SCRIPT_ROOT_DIR} --$cmd
+              ;;
+      esac
     done
 }
 
