@@ -1,2 +1,5 @@
+
+#
+# Server
 server:
   rootPath: "/api/*"
